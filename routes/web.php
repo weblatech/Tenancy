@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Hash;
 
 $currentHost = request()->getHost();
 $centralDomains = config('tenancy.central_domains', []);
@@ -65,8 +66,22 @@ Route::domain($domainToRegister)->group(function () {
 
         Route::get('/seed-admin', function () {
             try {
-                \Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--force' => true]);
-                return 'Super admin seeded! Email: admin@saascommerce.com / Password: admin123<br>Go to <a href="/login">Login</a>';
+                $user = \App\Models\User::where('email', 'admin@saascommerce.com')->first();
+                if (!$user) {
+                    $user = \App\Models\User::create([
+                        'name' => 'Super Admin',
+                        'email' => 'admin@saascommerce.com',
+                        'password' => Hash::make('admin123'),
+                        'is_super_admin' => true,
+                        'email_verified_at' => now(),
+                    ]);
+                } else {
+                    $user->update([
+                        'password' => Hash::make('admin123'),
+                        'is_super_admin' => true,
+                    ]);
+                }
+                return 'Super admin ready!<br>Email: admin@saascommerce.com<br>Password: admin123<br><br><a href="/login">Go to Login →</a>';
             } catch (\Exception $e) {
                 return 'Error: ' . $e->getMessage();
             }
