@@ -14,7 +14,6 @@ return Application::configure(basePath: dirname(__DIR__))
         then: function () {
             Route::middleware([
                 'web',
-                \App\Http\Middleware\InitializeTenantFlexible::class,
             ])->group(dirname(__DIR__) . '/routes/tenant.php');
         }
     )

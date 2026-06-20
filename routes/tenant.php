@@ -3,8 +3,6 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
-use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
-use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Product;
@@ -54,8 +52,7 @@ if (!function_exists('getRealIpAddress')) {
 
 Route::middleware([
     'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
+    \App\Http\Middleware\InitializeTenantFlexible::class,
     \App\Http\Middleware\CheckTenantSubscription::class,
 ])->group(function () {
 
