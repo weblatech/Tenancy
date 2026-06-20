@@ -20,17 +20,27 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        value: db.jxlesdofpgavqncugjjo.supabase.co
+        fromDatabase:
+          name: saas-ecommerce-db
+          property: host
       - key: DB_PORT
-        value: "6543"
+        fromDatabase:
+          name: saas-ecommerce-db
+          property: port
       - key: DB_DATABASE
-        value: postgres
+        fromDatabase:
+          name: saas-ecommerce-db
+          property: database
       - key: DB_USERNAME
-        value: postgres.jxlesdofpgavqncugjjo
+        fromDatabase:
+          name: saas-ecommerce-db
+          property: user
       - key: DB_PASSWORD
-        value: Shanze@7860
+        fromDatabase:
+          name: saas-ecommerce-db
+          property: password
       - key: DB_SSLMODE
-        value: require
+        value: prefer
       - key: SESSION_DRIVER
         value: database
       - key: CACHE_STORE
@@ -39,3 +49,9 @@ services:
         value: database
       - key: LOG_LEVEL
         value: debug
+
+databases:
+  - name: saas-ecommerce-db
+    plan: free
+    databaseName: saas_ecommerce
+    ipAllowList: []
