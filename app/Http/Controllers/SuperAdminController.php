@@ -53,8 +53,8 @@ class SuperAdminController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('id', 'like', "%{$search}%")
-                  ->orWhere('name', 'like', "%{$search}%");
+                $q->whereRaw('LOWER(id) LIKE ?', ['%' . strtolower($search) . '%'])
+                  ->orWhereRaw('LOWER(name) LIKE ?', ['%' . strtolower($search) . '%']);
             });
         }
 
