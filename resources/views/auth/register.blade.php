@@ -13,7 +13,7 @@
             <x-input-label for="store_domain" value="Store URL (e.g. my-shop)" />
             <div class="flex items-center">
                 <x-text-input id="store_domain" class="block mt-1 w-full" type="text" name="store_domain" :value="old('store_domain')" required autocomplete="store_domain" />
-                <span class="ml-2 text-gray-500">.{{ explode(',', config('tenancy.central_domains', 'localhost'))[0] }}</span>
+                <span class="ml-2 text-gray-500">.{{ config('tenancy.central_domains', ['localhost'])[0] }}</span>
             </div>
             <x-input-error :messages="$errors->get('store_domain')" class="mt-2" />
         </div>
