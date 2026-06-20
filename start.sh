@@ -1,24 +1,25 @@
 #!/bin/bash
 
-# Create .env file from env vars
-echo "APP_NAME=${APP_NAME:-SaaSEcommerce}" > .env
-echo "APP_ENV=${APP_ENV:-production}" >> .env
-echo "APP_KEY=${APP_KEY:-}" >> .env
-echo "APP_DEBUG=${APP_DEBUG:-true}" >> .env
-echo "APP_URL=${APP_URL:-https://saas-ecommerce-xx7e.onrender.com}" >> .env
-echo "CENTRAL_DOMAINS=${CENTRAL_DOMAINS:-saas-ecommerce-xx7e.onrender.com}" >> .env
-echo "DB_CONNECTION=${DB_CONNECTION:-pgsql}" >> .env
-echo "DB_HOST=${DB_HOST:-db.jxlesdofpgavqncugjjo.supabase.co}" >> .env
-echo "DB_PORT=${DB_PORT:-5432}" >> .env
-echo "DB_DATABASE=${DB_DATABASE:-postgres}" >> .env
-echo "DB_USERNAME=${DB_USERNAME:-postgres}" >> .env
-echo "DB_PASSWORD=${DB_PASSWORD:-Shanze@7860}" >> .env
-echo "DB_SSLMODE=${DB_SSLMODE:-require}" >> .env
-echo "SESSION_DRIVER=${SESSION_DRIVER:-database}" >> .env
-echo "CACHE_STORE=${CACHE_STORE:-database}" >> .env
-echo "QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}" >> .env
+# Write only non-secret env vars to .env (APP_KEY comes from Render system env)
+cat > .env <<EOF
+APP_NAME=${APP_NAME:-SaaSEcommerce}
+APP_ENV=${APP_ENV:-production}
+APP_DEBUG=${APP_DEBUG:-true}
+APP_URL=${APP_URL:-https://saas-ecommerce-xx7e.onrender.com}
+CENTRAL_DOMAINS=${CENTRAL_DOMAINS:-saas-ecommerce-xx7e.onrender.com}
+DB_CONNECTION=${DB_CONNECTION:-pgsql}
+DB_HOST=${DB_HOST:-db.jxlesdofpgavqncugjjo.supabase.co}
+DB_PORT=${DB_PORT:-5432}
+DB_DATABASE=${DB_DATABASE:-postgres}
+DB_USERNAME=${DB_USERNAME:-postgres}
+DB_PASSWORD=${DB_PASSWORD:-Shanze@7860}
+DB_SSLMODE=${DB_SSLMODE:-require}
+SESSION_DRIVER=${SESSION_DRIVER:-database}
+CACHE_STORE=${CACHE_STORE:-database}
+QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
+EOF
 
-# Generate APP_KEY if empty
+# Generate APP_KEY only if not set by Render
 if [ -z "$APP_KEY" ]; then
     php artisan key:generate --force
 fi
@@ -26,7 +27,7 @@ fi
 # Migrate first (so session/cache tables exist)
 php artisan migrate --force
 
-# Then cache config
+# Then cache config (reads APP_KEY from system env var, not .env)
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
