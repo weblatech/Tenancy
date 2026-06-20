@@ -1,30 +1,30 @@
-FROM php:8.2-apache
+FROM php:8.2-cli
 
-# pdo_pgsql اور pgsql ایکسٹینشنز شامل کریں
-RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev zip unzip git libpq-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql pdo_pgsql
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git curl zip unzip libpng-dev libonig-dev libxml2-dev libpq-dev \
+    && docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath gd \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Apache کنفیگریشن
-RUN a2enmod rewrite
-RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
-
-# Composer انسٹال کریں
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# ورکنگ ڈائریکٹری اور فائلز کاپی کریں
 WORKDIR /var/www/html
+
+# Copy composer files first (for caching)
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+# Copy everything else
 COPY . .
 
-# ڈیپینڈنسیز انسٹال کریں
-RUN composer install --no-interaction --no-dev --optimize-autoloader
+# Run post-install scripts and setup
+RUN cp .env.example .env \
+    && php artisan key:generate --force \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 
-# پرمیشنز سیٹ کریں
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+EXPOSE 8000
 
-# پورٹ
-EXPOSE 80
-
-# سرور سٹارٹ ہونے پر مائیگریشن چلائیں اور پھر اپاچی چلائیں
-CMD bash -c "php artisan cache:clear && php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan migrate --force && apache2-foreground"
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
