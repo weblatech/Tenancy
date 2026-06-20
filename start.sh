@@ -5,7 +5,7 @@ if [ -z "$APP_KEY" ]; then
     export APP_KEY=$(php artisan key:generate --show)
 fi
 
-# Write .env from Render's env vars (NO hardcoded defaults for DB)
+# Write .env
 cat > .env <<EOF
 APP_NAME=${APP_NAME:-SaaSEcommerce}
 APP_ENV=${APP_ENV:-production}
@@ -25,27 +25,27 @@ CACHE_STORE=file
 QUEUE_CONNECTION=database
 EOF
 
-# Wait for database to be ready (max 60 seconds)
-echo "Waiting for database..."
+# Wait for database (max 90s)
+echo "Checking database..."
 TRIES=0
-until php artisan db:monitor 2>/dev/null || [ $TRIES -eq 30 ]; do
-    echo "  Attempt $((TRIES+1))/30 - database not ready yet, waiting 2s..."
-    sleep 2
+DB_READY=false
+until [ $TRIES -ge 45 ]; do
+    if php artisan db:table sessions --quiet 2>/dev/null; then
+        DB_READY=true
+        echo "Database connected!"
+        break
+    fi
     TRIES=$((TRIES+1))
+    echo "  Waiting for database... ($TRIES/45)"
+    sleep 2
 done
 
-# Run migrations if database is available
-if [ $TRIES -lt 30 ]; then
-    echo "Database is ready! Running migrations..."
+if [ "$DB_READY" = true ]; then
     php artisan migrate --force
+    echo "Migrations complete."
 else
-    echo "Database not ready after 60s, skipping migrations"
+    echo "Database not ready - serving with file sessions only."
 fi
 
-# Cache config, routes, views
-php artisan config:cache 2>/dev/null
-php artisan route:cache 2>/dev/null
-php artisan view:cache 2>/dev/null
-
-# Start the server
+# Start the server (NO config:cache - let Laravel read env vars directly)
 php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
