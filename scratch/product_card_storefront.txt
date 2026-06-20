@@ -1,0 +1,45 @@
+373:                             $pct = null;
+374:                             if ($displayCompare && $displayCompare > $displayPrice) {
+375:                                 $pct = round((($displayCompare - $displayPrice) / $displayCompare) * 100);
+376:                             }
+377:                         @endphp
+378:                         <a href="/product/{{ $product->id }}" class="block bg-white rounded-[2rem] shadow-sm border border-gray-150 p-4 hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between h-full">
+379:                             <div>
+380:                                 <!-- Image Container -->
+381:                                 <div class="w-full aspect-square overflow-hidden rounded-[1.5rem] relative bg-gray-50">
+382:                                     @if($product->image)
+383:                                         <img src="{{ tenant_asset($product->image) }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="{{ $product->name }}">
+384:                                     @else
+385:                                         <div class="w-full h-full flex items-center justify-center text-gray-400 font-bold">No Image</div>
+386:                                     @endif
+387:                                     @if($pct)
+388:                                         <div class="absolute bottom-0 left-0 bg-[#16a34a] text-white text-[11px] font-black px-3 py-1.5 rounded-tr-2xl rounded-bl-2xl flex items-center gap-1 z-10 shadow-sm uppercase tracking-wider">
+389:                                             🏷️ {{ $settings->enable_rtl ? 'بچت' : 'SAVE' }} {{ $pct }}%
+390:                                         </div>
+391:                                     @endif
+392:                                 </div>
+393:                                 
+394:                                 <!-- Details -->
+395:                                 <div class="pt-6 pb-2 text-center">
+396:                                     <h4 class="text-base md:text-lg font-black text-gray-900 mb-2 leading-snug text-center group-hover:underline decoration-2 underline-offset-4 decoration-gray-900 transition duration-150">
+397:                                         {{ $product->name }}
+398:                                     </h4>
+399:                                     
+400:                                     <div class="flex items-center justify-center gap-2.5 flex-wrap">
+401:                                         <span class="text-base md:text-lg font-black text-[#16a34a]">
+402:                                             @if($isFrom)
+403:                                                 {{ $settings->enable_rtl ? 'سے' : 'From' }}
+404:                                             @endif
+405:                                             Rs. {{ number_format($displayPrice, 2) }}
+406:                                         </span>
+407:                                         @if($displayCompare && $displayCompare > $displayPrice)
+408:                                             <span class="text-xs md:text-sm font-bold text-gray-400 line-through">
+409:                                                 Rs. {{ number_format($displayCompare, 2) }}
+410:                                             </span>
+411:                                         @endif
+412:                                     </div>
+413:                                 </div>
+414:                             </div>
+415:                         </a>
+416:                     @empty
+417:                         <div class="col-span-full py-12 text-center text-gray-400 font-bold">No products uploaded yet.</div>

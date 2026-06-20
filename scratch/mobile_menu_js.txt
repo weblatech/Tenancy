@@ -1,0 +1,4 @@
+178: <button id="mobileMenuBtn" class="md:hidden text-gray-800 focus:outline-none">
+184: <div id="mobileMenu" class="md:hidden hidden border-t p-4 space-y-2 shadow-lg store-header">
+723: document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+724: document.getElementById('mobileMenu').classList.toggle('hidden');

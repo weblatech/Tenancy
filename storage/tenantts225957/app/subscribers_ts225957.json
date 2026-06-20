@@ -1,0 +1,12 @@
+[
+    {
+        "email": "sub1@example.com",
+        "created_at": "2026-06-15 13:05:03",
+        "ip": "1.1.1.1"
+    },
+    {
+        "email": "sub2@example.com",
+        "created_at": "2026-06-15 13:05:03",
+        "ip": "2.2.2.2"
+    }
+]

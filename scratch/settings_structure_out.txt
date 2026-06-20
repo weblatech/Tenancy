@@ -1,0 +1,80 @@
+=== Tabs or sections in settings.blade.php ===
+Tab button: <button onclick="switchTab('global')" id="tab-global" class="tab-btn pb-3 text-slate-500 hover:text-indigo-600 font-extrabold text-[10px] tracking-wider uppercase border-b-2 border-transparent transition flex items-center justify-center gap-1 active text-indigo-600 !border-indigo-600">
+                        🎨 Theme
+                    </button>
+Tab button: <button onclick="switchTab('sections')" id="tab-sections" class="tab-btn pb-3 text-slate-500 hover:text-indigo-600 font-extrabold text-[10px] tracking-wider uppercase border-b-2 border-transparent transition flex items-center justify-center gap-1">
+                        🧩 Sections
+                    </button>
+Tab button: <button onclick="switchTab('pages')" id="tab-pages" class="tab-btn pb-3 text-slate-500 hover:text-indigo-600 font-extrabold text-[10px] tracking-wider uppercase border-b-2 border-transparent transition flex items-center justify-center gap-1">
+                        📄 Pages
+                    </button>
+Tab button: <button onclick="switchTab('navigation')" id="tab-navigation" class="tab-btn pb-3 text-slate-500 hover:text-indigo-600 font-extrabold text-[10px] tracking-wider uppercase border-b-2 border-transparent transition flex items-center justify-center gap-1">
+                        🗺️ Menu
+                    </button>
+Tab button: <button onclick="switchTab('shoppage')" id="tab-shoppage" class="tab-btn pb-3 text-slate-500 hover:text-indigo-600 font-extrabold text-[10px] tracking-wider uppercase border-b-2 border-transparent transition flex items-center justify-center gap-1">
+                        🛒 Shop
+                    </button>
+
+=== Headings ===
+Heading: <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Button 1: Add to Cart (کارٹ بٹن)</h4>
+Heading: <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Button 2: Cash on Delivery (ڈلیوری بٹن)</h4>
+Heading: <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Page Sections</h3>
+Heading: <h4 class="font-bold text-slate-800 text-xs tracking-tight">{{ $sec->title }}</h4>
+Heading: <h3 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider" id="selected_section_title">Configure Section</h3>
+Heading: <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Store Pages</h3>
+Heading: <h4 class="font-bold text-slate-800 text-xs tracking-tight">{{ $page->title }}</h4>
+Heading: <h3 class="font-extrabold text-slate-800 text-xs uppercase tracking-wider" id="page_editor_title">Add Page</h3>
+Heading: <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Header Navigation Menu</h4>
+Heading: <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Footer Quick Links</h4>
+Heading: <h4 class="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Footer Policies Links</h4>
+Heading: <h3 class="font-extrabold text-slate-800 text-lg flex items-center">
+                        <span class="bg-indigo-100 text-indigo-600 p-2 rounded-xl mr-3 text-base shadow-sm">🧩</span> Choose Section Template
+                    </h3>
+Heading: <h4 class="font-extrabold text-slate-800 text-xs mb-1">Image with Text</h4>
+Heading: <h4 class="font-extrabold text-slate-800 text-xs mb-1">Discount Banner</h4>
+Heading: <h4 class="font-extrabold text-slate-800 text-xs mb-1">Trust Badges</h4>
+Heading: <h4 class="font-extrabold text-slate-800 text-xs mb-1">Customer Reviews</h4>
+Heading: <h4 class="font-extrabold text-slate-800 text-xs mb-1">FAQ Accordion</h4>
+Heading: <h4 class="font-extrabold text-slate-800 text-xs mb-1">Custom Code</h4>
+Heading: <h4 class="font-extrabold text-slate-800 text-xs mb-1">Featured Products</h4>
+Heading: <h4 class="font-extrabold text-slate-800 text-xs mb-1">Video Banner</h4>
+Heading: <h4 class="font-extrabold text-slate-800 text-xs mb-1">Newsletter Signup</h4>
+Heading: <h4 class="font-extrabold text-slate-800 text-xs mb-1">Rich Text Banner</h4>
+
+=== Form fields / inputs matching theme, button, hero, header ===
+Input: <input type="checkbox" name="announcement_active" value="1" class="sr-only peer" {{ ($settings->
+Input: <input type="checkbox" name="announcement_marquee" value="1" class="sr-only peer" {{ ($settings->
+Input: <input type="text" name="announcement_text" value="{{ $settings->
+Input: <input type="color" name="announcement_bg_color" value="{{ $settings->
+Input: <input type="color" name="announcement_text_color" value="{{ $settings->
+Input: <input type="file" name="header_logo" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="updateFileName(this)">
+Input: <input type="text" name="hero_title" value="{{ $settings->
+Input: <input type="text" name="hero_btn_text" value="{{ $settings->
+Input: <input type="text" name="hero_btn_link" value="{{ $settings->
+Input: <input type="text" name="hero_btn2_text" value="{{ $settings->
+Input: <input type="text" name="hero_btn2_link" value="{{ $settings->
+Input: <input type="checkbox" name="hero_show_container" value="1" class="sr-only peer" {{ ($settings->
+Input: <input type="range" name="hero_overlay_opacity" min="0" max="95" step="5" value="{{ $settings->
+Input: <input type="color" name="hero_bg_color" value="{{ $settings->
+Input: <input type="color" name="hero_text_color" value="{{ $settings->
+Input: <input type="file" name="hero_image" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="updateFileName(this)">
+Input: <input type="color" name="collection_banner_bg" value="{{ $settings->
+Input: <input type="color" name="collection_banner_text_color" value="{{ $settings->
+Input: <input type="color" name="footer_bg_color" value="{{ $settings->
+Input: <input type="color" name="footer_text_color" value="{{ $settings->
+Input: <input type="text" name="btn_add_to_cart_text" value="{{ $settings->
+Input: <input type="text" name="btn_add_to_cart_bg" id="btn_add_to_cart_bg" value="{{ $settings->
+Input: <input type="text" name="btn_add_to_cart_text_color" id="btn_add_to_cart_text_color" value="{{ $settings->
+Input: <input type="text" name="btn_buy_now_text" value="{{ $settings->
+Input: <input type="text" name="btn_buy_now_bg" id="btn_buy_now_bg" value="{{ $settings->
+Input: <input type="text" name="btn_buy_now_text_color" id="btn_buy_now_text_color" value="{{ $settings->
+Input: <input type="text" name="banner_btn_text" placeholder="e.g. Buy Now" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold input-premium outline-none">
+Input: <input type="text" name="iwt_btn_text" placeholder="e.g. Read More" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold input-premium outline-none">
+Input: <input type="text" name="iwt_btn_link" placeholder="e.g. #products" value="#products" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold input-premium outline-none">
+Input: <input type="text" name="video_btn_text" placeholder="e.g. Play Video" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold input-premium outline-none">
+Input: <input type="text" name="video_btn_link" placeholder="e.g. #products" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold input-premium outline-none">
+Input: <input type="text" name="news_btn_text" placeholder="e.g. Subscribe" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold input-premium outline-none">
+Input: <input type="text" name="rt_btn_text" placeholder="e.g. Learn More" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold input-premium outline-none">
+Input: <input type="text" name="rt_btn_link" placeholder="e.g. #products" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold input-premium outline-none">
+Input: <input type="color" name="collection_banner_bg" value="{{ $settings->
+Input: <input type="color" name="collection_banner_text_color" value="{{ $settings->

@@ -1,0 +1,150 @@
+197:                                 <button type="button" onclick="toggleAccordion('acc-header')" class="flex justify-between items-center w-full text-left py-2 group">
+198:                                     <span class="flex items-center text-xs tracking-wide font-extrabold uppercase text-slate-600 group-hover:text-indigo-600 transition">
+199:                                         <span class="bg-blue-50 text-blue-600 p-2 rounded-xl mr-3 text-base shadow-sm">🏠</span> Header & Menu
+200:                                     </span>
+201:                                     <svg id="arrow-acc-header" class="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+202:                                 </button>
+203:                                 <div id="acc-header" class="accordion-content hidden pt-4 space-y-4">
+204:                                     <div>
+205:                                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Store Logo</label>
+206:                                         @if($settings->header_logo)
+207:                                             <div class="mb-3 p-2 border border-slate-100 rounded-xl bg-slate-50 flex items-center justify-between">
+208:                                                 <img class="h-10 w-auto object-contain" src="{{ tenant_asset($settings->header_logo) }}" alt="Logo">
+209:                                                 <span class="text-[10px] bg-indigo-50 text-indigo-600 font-bold px-2 py-1 rounded-full uppercase">Active</span>
+210:                                             </div>
+211:                                         @endif
+212:                                         <div class="relative border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-xl p-4 text-center cursor-pointer transition bg-slate-50/50 group">
+213:                                             <input type="file" name="header_logo" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="updateFileName(this)">
+214:                                             <div class="flex flex-col items-center gap-1">
+215:                                                 <span class="text-xl group-hover:scale-110 transition duration-200">📁</span>
+216:                                                 <span class="text-xs font-bold text-slate-700" id="file-header_logo-label">Upload New Logo</span>
+217:                                                 <span class="text-[10px] text-slate-400">PNG, JPG up to 2MB</span>
+218:                                             </div>
+219:                                         </div>
+220:                                     </div>
+221:                                     <div>
+222:                                         <div class="flex justify-between items-center mb-1">
+223:                                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Navigation Links</label>
+224:                                             <span class="text-[10px] text-indigo-500 font-black">Format: Label | URL</span>
+225:                                         </div>
+226:                                         @php 
+227:                                             $menuText = ''; 
+228:                                             if(is_array($settings->header_menu)) { 
+229:                                                 foreach($settings->header_menu as $item) { 
+230:                                                     $menuText .= $item['label'] . ' | ' . $item['url'] . "\n"; 
+231:                                                 } 
+232:                                             } 
+233:                                         @endphp
+234:                                         <textarea name="header_menu_text" rows="4" placeholder="Home | /&#10;Herbal Tea | #products&#10;About Us | /about" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-700 outline-none input-premium leading-relaxed">{{ trim($menuText) }}</textarea>
+235:                                     </div>
+236:                                 </div>
+237:                             </div>
+238: 
+239:                             <!-- Accordion: Hero Banner -->
+240:                             <div class="py-4">
+241:                                 <button type="button" onclick="toggleAccordion('acc-hero')" class="flex justify-between items-center w-full text-left py-2 group">
+242:                                     <span class="flex items-center text-xs tracking-wide font-extrabold uppercase text-slate-600 group-hover:text-indigo-600 transition">
+243:                                         <span class="bg-purple-50 text-purple-600 p-2 rounded-xl mr-3 text-base shadow-sm">🌟</span> Hero Banner
+244:                                     </span>
+245:                                     <svg id="arrow-acc-hero" class="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+246:                                 </button>
+247:                                 <div id="acc-hero" class="accordion-content hidden pt-4 space-y-4">
+248:                                     <div>
+249:                                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Background Layout Type</label>
+250:                                         <select name="hero_layout_type" onchange="toggleHeroFields()" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none input-premium">
+251:                                             <option value="color" {{ ($settings->hero_layout_type ?? '') == 'color' ? 'selected' : '' }}>Solid Background Color</option>
+252:                                             <option value="image" {{ ($settings->hero_layout_type ?? '') == 'image' ? 'selected' : '' }}>Full Image Background</option>
+253:                                             <option value="custom_code" {{ ($settings->hero_layout_type ?? '') == 'custom_code' ? 'selected' : '' }}>Custom Banner Code (HTML)</option>
+254:                                         </select>
+255:                                     </div>
+256: 
+257:                                     <!-- Block for Text/Title (Applicable for Color and Image backgrounds) -->
+258:                                     <div id="hero-text-controls" class="space-y-4">
+259:                                         <div>
+260:                                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Main Title</label>
+261:                                             <input type="text" name="hero_title" value="{{ $settings->hero_title }}" placeholder="Welcome to Our Store!" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold input-premium outline-none">
+262:                                         </div>
+263:                                         <div>
+264:                                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Subtitle</label>
+265:                                             <textarea name="hero_subtitle" rows="2" placeholder="Discover our premium products..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold input-premium outline-none">{{ $settings->hero_subtitle }}</textarea>
+266:                                         </div>
+267:                                         <div class="grid grid-cols-2 gap-4">
+268:                                             <div>
+269:                                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Button Text</label>
+270:                                                 <input type="text" name="hero_btn_text" value="{{ $settings->hero_btn_text ?? '' }}" placeholder="Shop Now" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold input-premium outline-none">
+271:                                             </div>
+272:                                             <div>
+273:                                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Button Link</label>
+274:                                                 <input type="text" name="hero_btn_link" value="{{ $settings->hero_btn_link ?? '' }}" placeholder="#products" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold input-premium outline-none">
+275:                                             </div>
+276:                                         </div>
+277:                                         <div class="grid grid-cols-2 gap-4">
+278:                                             <div>
+279:                                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Button 2 Text</label>
+280:                                                 <input type="text" name="hero_btn2_text" value="{{ $settings->hero_btn2_text ?? '' }}" placeholder="Learn More" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold input-premium outline-none">
+281:                                             </div>
+282:                                             <div>
+283:                                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Button 2 Link</label>
+284:                                                 <input type="text" name="hero_btn2_link" value="{{ $settings->hero_btn2_link ?? '' }}" placeholder="#products" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold input-premium outline-none">
+285:                                             </div>
+286:                                         </div>
+287:                                         <div class="grid grid-cols-2 gap-4">
+288:                                             <div>
+289:                                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Banner Height</label>
+290:                                                 <select name="hero_height" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none input-premium">
+291:                                                     <option value="small" {{ ($settings->hero_height ?? '') == 'small' ? 'selected' : '' }}>Small</option>
+292:                                                     <option value="medium" {{ ($settings->hero_height ?? 'medium') == 'medium' ? 'selected' : '' }}>Medium</option>
+293:                                                     <option value="large" {{ ($settings->hero_height ?? '') == 'large' ? 'selected' : '' }}>Large</option>
+294:                                                 </select>
+295:                                             </div>
+296:                                             <div>
+297:                                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Content Alignment</label>
+298:                                                 <select name="hero_align" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none input-premium">
+299:                                                     <option value="left" {{ ($settings->hero_align ?? '') == 'left' ? 'selected' : '' }}>Left</option>
+300:                                                     <option value="center" {{ ($settings->hero_align ?? 'center') == 'center' ? 'selected' : '' }}>Center</option>
+301:                                                     <option value="right" {{ ($settings->hero_align ?? '') == 'right' ? 'selected' : '' }}>Right</option>
+302:                                                 </select>
+303:                                             </div>
+304:                                         </div>
+305:                                         <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+306:                                             <div>
+307:                                                 <span class="text-xs font-bold text-slate-700">Show Container on Desktop</span>
+308:                                                 <p class="text-[10px] text-slate-400">Puts text inside a solid card</p>
+309:                                             </div>
+310:                                             <label class="relative inline-flex items-center cursor-pointer">
+311:                                                 <input type="checkbox" name="hero_show_container" value="1" class="sr-only peer" {{ ($settings->hero_show_container ?? false) ? 'checked' : '' }}>
+312:                                                 <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-350 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#004c3f]"></div>
+313:                                             </label>
+314:                                         </div>
+315:                                         <div>
+316:                                             <div class="flex justify-between items-center mb-1">
+317:                                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Background Overlay Opacity</label>
+318:                                                 <span class="text-[10px] text-indigo-500 font-black" id="opacity-val-label">{{ $settings->hero_overlay_opacity ?? 50 }}%</span>
+319:                                             </div>
+320:                                             <input type="range" name="hero_overlay_opacity" min="0" max="95" step="5" value="{{ $settings->hero_overlay_opacity ?? 50 }}" oninput="document.getElementById('opacity-val-label').innerText = this.value + '%'" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+321:                                         </div>
+322:                                     </div>
+323: 
+324:                                     <!-- Fields for Solid Color layout -->
+325:                                     <div id="hero-block-color" class="grid grid-cols-2 gap-4 hidden">
+326:                                         <div>
+327:                                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">BG Color</label>
+328:                                             <div class="flex items-center gap-2">
+329:                                                 <div class="relative w-8 h-8 rounded-lg overflow-hidden border border-slate-200 cursor-pointer shrink-0">
+330:                                                     <input type="color" name="hero_bg_color" value="{{ $settings->hero_bg_color ?? '#eff6ff' }}" oninput="updateColorValue(this)" class="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer scale-150 bg-transparent">
+331:                                                 </div>
+332:                                                 <input type="text" id="val-hero_bg_color" value="{{ $settings->hero_bg_color ?? '#eff6ff' }}" readonly class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-mono text-slate-500 outline-none">
+333:                                             </div>
+334:                                         </div>
+335:                                         <div>
+336:                                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Text Color</label>
+337:                                             <div class="flex items-center gap-2">
+338:                                                 <div class="relative w-8 h-8 rounded-lg overflow-hidden border border-slate-200 cursor-pointer shrink-0">
+339:                                                     <input type="color" name="hero_text_color" value="{{ $settings->hero_text_color ?? '#1e3a8a' }}" oninput="updateColorValue(this)" class="absolute inset-0 w-full h-full p-0 border-0 cursor-pointer scale-150 bg-transparent">
+340:                                                 </div>
+341:                                                 <input type="text" id="val-hero_text_color" value="{{ $settings->hero_text_color ?? '#1e3a8a' }}" readonly class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-mono text-slate-500 outline-none">
+342:                                             </div>
+343:                                         </div>
+344:                                     </div>
+345: 
+346:                                     <!-- Fields for Image Background layout -->

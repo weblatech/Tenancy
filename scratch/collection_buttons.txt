@@ -1,0 +1,7 @@
+100: <button onclick="openCartDrawer()" class="text-gray-800 hover:text-green-600 transition flex items-center relative">
+104: <button id="mobileMenuBtn" class="md:hidden text-gray-800 focus:outline-none">
+151: <form action="/collection" method="GET" id="filterForm" class="w-full flex flex-wrap gap-4 items-center justify-start">
+156: <select name="availability" onchange="document.getElementById('filterForm').submit()" class="px-3 py-2 border border-gray-200 rounded-xl bg-gray-50 text-xs font-bold outline-none focus:border-green-600 transition">
+165: <input type="number" name="price_max" value="{{ request('price_max') }}" placeholder="e.g. 3000" onchange="document.getElementById('filterForm').submit()" class="w-28 px-3 py-2 border border-gray-200 rounded-xl bg-gray-50 text-xs font-bold outline-none focus:border-green-600 transition">
+195: <p class="text-lg">{{ $settings->enable_rtl ? 'اس فلٹر کے مطابق کوئی پروڈکٹ نہیں ملی۔' : 'No products match your filters.' }}</p>
+442: <button type="button" style="color: {{ $settings->footer_bg_color ?? '#4CAF50' }};" class="w-full bg-white font-black py-4 px-5 rounded-xl hover:bg-gray-100 transition shadow-lg transform hover:-translate-y-1">Subscribe Now</button>
