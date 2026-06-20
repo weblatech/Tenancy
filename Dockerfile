@@ -25,7 +25,9 @@ RUN npm run build
 RUN rm -f bootstrap/cache/config.php \
     && rm -f bootstrap/cache/routes-v7.php \
     && rm -f bootstrap/cache/views.php \
-    && rm -f .env
+    && rm -f .env \
+    && chmod -R 775 storage bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 
 RUN chmod +x start.sh
 
