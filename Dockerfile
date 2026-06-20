@@ -22,4 +22,13 @@ RUN composer install --no-interaction --no-dev --optimize-autoloader
 # پرمیشنز
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
+# مائیگریشنز چلائیں اور کیشے کلیئر کریں
+RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
+
+# مائیگریشنز چلائیں تاکہ 500 ایرر ختم ہو جائے
+RUN php artisan migrate --force
+
+# پرمیشنز کو یقینی بنائیں
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
 EXPOSE 80
