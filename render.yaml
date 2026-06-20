@@ -8,9 +8,15 @@ services:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
-        value: "false"
+        value: "true"
       - key: APP_KEY
         generateValue: true
+      - key: APP_NAME
+        value: SaaSEcommerce
+      - key: APP_URL
+        value: https://saas-ecommerce-xx7e.onrender.com
+      - key: CENTRAL_DOMAINS
+        value: saas-ecommerce-xx7e.onrender.com,localhost,127.0.0.1
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
@@ -22,7 +28,7 @@ services:
       - key: DB_USERNAME
         value: postgres
       - key: DB_PASSWORD
-        sync: false
+        value: Shanze@7860
       - key: DB_SSLMODE
         value: require
       - key: SESSION_DRIVER
@@ -32,4 +38,4 @@ services:
       - key: QUEUE_CONNECTION
         value: database
       - key: LOG_LEVEL
-        value: error
+        value: debug
