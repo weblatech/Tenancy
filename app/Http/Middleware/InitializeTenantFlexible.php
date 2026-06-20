@@ -10,6 +10,11 @@ class InitializeTenantFlexible
 {
     public function handle(Request $request, Closure $next)
     {
+        // Already initialized by route parameter?
+        if (tenancy()->initialized) {
+            return $next($request);
+        }
+
         $host = $request->getHost();
         $centralDomains = config('tenancy.central_domains', ['localhost']);
 
@@ -21,40 +26,27 @@ class InitializeTenantFlexible
                     tenancy()->initialize($domain->tenant);
                     return $next($request);
                 }
-            } catch (\Exception $e) {
-                // Domain not found
-            }
+            } catch (\Exception $e) {}
         }
 
-        // 2. Try path-based: first segment might be tenant ID (for Render)
-        $segments = $request->segments();
-        if (count($segments) > 0) {
-            $firstSegment = $segments[0];
-            $tenant = \App\Models\Tenant::find($firstSegment);
+        // 2. Try route parameter {tenant}
+        $tenantParam = $request->route('tenant');
+        if ($tenantParam) {
+            $tenant = \App\Models\Tenant::find($tenantParam);
             if ($tenant) {
-                // Strip tenant ID from path
-                $request->offsetUnset('segments');
-                array_shift($segments);
-                $request->setPathInfo('/' . implode('/', $segments));
-
-                try {
-                    tenancy()->initialize($tenant);
-                    return $next($request);
-                } catch (\Exception $e) {
-                    // Already initialized
-                }
+                tenancy()->initialize($tenant);
+                return $next($request);
             }
+            abort(404, 'Store not found');
         }
 
-        // 3. Fallback: user-based tenancy (for /shop routes on central domain)
+        // 3. Fallback: user-based tenancy (for /shop on central domain)
         if (Auth::check() && Auth::user()->tenant_id) {
             $tenant = \App\Models\Tenant::find(Auth::user()->tenant_id);
             if ($tenant) {
                 try {
                     tenancy()->initialize($tenant);
-                } catch (\Exception $e) {
-                    // Already initialized
-                }
+                } catch (\Exception $e) {}
             }
         }
 

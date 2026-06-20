@@ -12,7 +12,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         // یہاں ہم نے دکان (Tenant) کے راستوں کو لاراویل 12 کے مطابق رجسٹر کر دیا ہے
         then: function () {
+            // Domain-based tenancy (custom domains)
             require dirname(__DIR__) . '/routes/tenant.php';
+
+            // Path-based tenancy for Render (/{tenant}/shop, /{tenant}/, etc.)
+            Route::prefix('{tenant}')->middleware([
+                'web',
+                \App\Http\Middleware\InitializeTenantFlexible::class,
+            ])->group(dirname(__DIR__) . '/routes/tenant.php');
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
