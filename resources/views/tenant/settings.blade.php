@@ -106,7 +106,7 @@
 
         <!-- Right Side Links -->
         <div class="flex items-center gap-4">
-            <a href="http://{{ $tenantId }}.localhost:8000" target="_blank" class="hidden md:flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white transition">
+            <a href="{{ tenant_store_url() }}" target="_blank" class="hidden md:flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white transition">
                 <span>View Store</span>
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
             </a>
@@ -1489,7 +1489,7 @@
                 </div>
                 <!-- Mock Address Input -->
                 <div class="bg-slate-900 px-4 py-1.5 rounded-lg flex-1 text-center flex items-center justify-center gap-2 border border-slate-800 text-slate-400 font-semibold select-all font-sans text-xs">
-                    <span class="text-emerald-500 text-[10px]">🔒 Secure Connection |</span> http://{{ $tenantId }}.localhost:8000/
+                    <span class="text-emerald-500 text-[10px]">🔒 Secure Connection |</span> {{ tenant_store_url() }}
                 </div>
                 <!-- Refresh Button -->
                 <button type="button" onclick="refreshPreview()" class="text-slate-400 hover:text-white transition p-1 hover:bg-slate-800 rounded-lg shrink-0" title="Refresh Live Storefront">

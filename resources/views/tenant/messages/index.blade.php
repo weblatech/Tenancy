@@ -72,7 +72,7 @@
                         <span>Dashboard</span>
                     </a>
                     <span class="text-slate-700">|</span>
-                    <a href="http://{{ $tenantId }}.localhost:8000" target="_blank" class="text-slate-400 hover:text-white text-xs font-bold transition">View Storefront ↗</a>
+                    <a href="{{ tenant_store_url() }}" target="_blank" class="text-slate-400 hover:text-white text-xs font-bold transition">View Storefront ↗</a>
                 </div>
             </div>
         </div>

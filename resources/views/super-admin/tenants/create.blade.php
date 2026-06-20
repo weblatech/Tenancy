@@ -169,7 +169,7 @@
                         Store Domain (URL)
                     </label>
                     <div class="relative">
-                        <input type="text" name="domain" id="domain" value="{{ old('domain') }}" placeholder="e.g. fashionhub.localhost" required
+                        <input type="text" name="domain" id="domain" value="{{ old('domain') }}" placeholder="e.g. fashionhub.store" required
                             class="input-premium w-full px-4 py-3 text-xs font-bold text-slate-800 bg-slate-50/80 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 placeholder:text-slate-300 placeholder:font-medium pr-10">
                         <div class="absolute right-3 top-1/2 -translate-y-1/2">
                             <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -181,7 +181,7 @@
                         <svg class="w-3 h-3 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
                         </svg>
-                        Local development defaults to <strong class="text-slate-500">slug.localhost</strong> — auto-filled as you type the Store ID.
+                        Local development defaults to <strong class="text-slate-500">slug.store</strong> — auto-filled as you type the Store ID.
                     </p>
                 </div>
             </div>
@@ -346,7 +346,7 @@
         e.target.value = slug;
 
         // Auto-fill domain
-        domainInput.value = slug ? `${slug}.localhost` : '';
+        domainInput.value = slug ? `${slug}.store` : '';
 
         // Auto-suggest store name (only if empty or still contains default pattern)
         if (slug && (!storeNameInput.value || storeNameInput.dataset.autoFilled === 'true')) {

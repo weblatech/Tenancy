@@ -126,7 +126,7 @@
                         <span>Dashboard</span>
                     </a>
                     <span class="text-slate-800">|</span>
-                    <a href="http://{{ $tenantId }}.localhost:8000" target="_blank" class="text-slate-400 hover:text-white text-xs font-bold transition flex items-center gap-1 px-3 py-2 rounded-xl hover:bg-slate-900">
+                    <a href="{{ tenant_store_url() }}" target="_blank" class="text-slate-400 hover:text-white text-xs font-bold transition flex items-center gap-1 px-3 py-2 rounded-xl hover:bg-slate-900">
                         <span>View Storefront ↗</span>
                     </a>
                 </div>

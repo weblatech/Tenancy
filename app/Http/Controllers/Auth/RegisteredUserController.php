@@ -36,7 +36,9 @@ class RegisteredUserController extends Controller
             'id' => $tenantId,
             'name' => ucfirst($tenantId) . ' Store',
         ]);
-        $tenant->domains()->create(['domain' => $tenantId . '.localhost']);
+        $centralDomains = explode(',', env('CENTRAL_DOMAINS', 'localhost'));
+        $appHost = $centralDomains[0] ?? 'localhost';
+        $tenant->domains()->create(['domain' => $tenantId . '.' . $appHost]);
 
         // 3. اب یوزر بنائیں اور اس کے ساتھ دکان کو جوڑ دیں
         $user = User::create([

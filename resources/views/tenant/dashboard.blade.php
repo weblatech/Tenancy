@@ -65,7 +65,7 @@
 
                 <!-- Right: Quick Actions -->
                 <div class="flex items-center gap-4">
-                    <a href="http://{{ $tenantId }}.localhost:8000" target="_blank" class="hidden md:flex items-center gap-1.5 text-slate-400 hover:text-white text-xs font-bold transition duration-150">
+                    <a href="{{ tenant_store_url() }}" target="_blank" class="hidden md:flex items-center gap-1.5 text-slate-400 hover:text-white text-xs font-bold transition duration-150">
                         <span>View Storefront</span>
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </a>
@@ -400,7 +400,7 @@
                     <h3 class="font-black text-xl mb-1.5">Preview Storefront</h3>
                     <p class="text-slate-400 text-xs font-medium max-w-sm leading-relaxed">View your active online store layout as customers see it.</p>
                 </div>
-                <a href="http://{{ $tenantId }}.localhost:8000" target="_blank" class="shrink-0 bg-white text-slate-900 font-extrabold text-xs px-5 py-3.5 rounded-xl hover:bg-slate-100 transition shadow-lg flex items-center gap-1.5">
+                <a href="{{ tenant_store_url() }}" target="_blank" class="shrink-0 bg-white text-slate-900 font-extrabold text-xs px-5 py-3.5 rounded-xl hover:bg-slate-100 transition shadow-lg flex items-center gap-1.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     <span>Open Store</span>
                 </a>

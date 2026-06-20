@@ -244,11 +244,11 @@
                     
                     <!-- Details ribbon -->
                     <div class="flex flex-wrap items-center justify-center gap-3 pt-4 border-t border-slate-100">
-                        <a href="http://{{ Auth::user()->tenant_id }}.localhost:8000" target="_blank" class="detail-pill">
+                        <a href="{{ tenant_store_url() }}" target="_blank" class="detail-pill">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-indigo-500">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9s2.015-9 4.5-9m0 0a9.003 9.003 0 0 1 8.716 6.747M12 3a9.003 9.003 0 0 0-8.716 6.747M3 10.5h18" />
                             </svg>
-                            <span>{{ Auth::user()->tenant_id }}.localhost:8000</span>
+                            <span>{{ request()->getHost() }}</span>
                         </a>
                         
                         <div class="detail-pill">
@@ -285,7 +285,7 @@
                                 Manage your entire store from the central control panel. Process customer orders, view analytics statistics, manage customer reviews, and edit system setups.
                             </p>
                         </div>
-                        <a href="http://{{ Auth::user()->tenant_id }}.localhost:8000/shop" target="_blank" class="btn-violet-launch">
+                        <a href="{{ tenant_store_url('shop') }}" target="_blank" class="btn-violet-launch">
                             🚀 Go to My Store Admin
                         </a>
                     </div>
@@ -305,7 +305,7 @@
                                 Design your storefront layout. Customize announcement texts, headers, logo banners, hero sliders, WhatsApp checkout settings, and toggle RTL script support.
                             </p>
                         </div>
-                        <a href="http://{{ Auth::user()->tenant_id }}.localhost:8000/shop/settings" target="_blank" class="btn-green-launch">
+                        <a href="{{ tenant_store_url('shop/settings') }}" target="_blank" class="btn-green-launch">
                             🎨 Design Storefront Layout
                         </a>
                     </div>
@@ -323,7 +323,7 @@
                                 Add products, upload high-definition listing photos, configure product comparisons (sale pricing labels), track inventory stocks, and write engaging descriptions.
                             </p>
                         </div>
-                        <a href="http://{{ Auth::user()->tenant_id }}.localhost:8000/shop/add-product" target="_blank" class="btn-indigo-launch">
+                        <a href="{{ tenant_store_url('shop/add-product') }}" target="_blank" class="btn-indigo-launch">
                             📦 Manage Product Listings
                         </a>
                     </div>
@@ -342,7 +342,7 @@
                                 View your storefront live as it appears to customers. Check responsiveness, verify the design layout, and test order checkouts on your subdomain.
                             </p>
                         </div>
-                        <a href="http://{{ Auth::user()->tenant_id }}.localhost:8000" target="_blank" class="btn-white-launch">
+                        <a href="{{ tenant_store_url() }}" target="_blank" class="btn-white-launch">
                             🌐 Launch Storefront
                         </a>
                     </div>
