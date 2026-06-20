@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Write only non-secret env vars to .env (APP_KEY comes from Render system env)
+# Write .env file
 cat > .env <<EOF
 APP_NAME=${APP_NAME:-SaaSEcommerce}
 APP_ENV=${APP_ENV:-production}
+APP_KEY=placeholder
 APP_DEBUG=${APP_DEBUG:-true}
 APP_URL=${APP_URL:-https://saas-ecommerce-xx7e.onrender.com}
 CENTRAL_DOMAINS=${CENTRAL_DOMAINS:-saas-ecommerce-xx7e.onrender.com}
@@ -19,15 +20,13 @@ CACHE_STORE=${CACHE_STORE:-database}
 QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
 EOF
 
-# Generate APP_KEY only if not set by Render
-if [ -z "$APP_KEY" ]; then
-    php artisan key:generate --force
-fi
+# Always generate fresh APP_KEY (writes proper base64 key to .env)
+php artisan key:generate --force
 
-# Migrate first (so session/cache tables exist)
+# Migrate first
 php artisan migrate --force
 
-# Then cache config (reads APP_KEY from system env var, not .env)
+# Cache config (now .env has valid APP_KEY)
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
