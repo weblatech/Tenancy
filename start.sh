@@ -25,27 +25,25 @@ CACHE_STORE=file
 QUEUE_CONNECTION=database
 EOF
 
-# Wait for database (max 90s)
-echo "Checking database..."
+# Run migrations with retry (database might take time to be ready)
+echo "Running migrations..."
 TRIES=0
-DB_READY=false
-until [ $TRIES -ge 45 ]; do
-    if php artisan db:table sessions --quiet 2>/dev/null; then
-        DB_READY=true
-        echo "Database connected!"
+until [ $TRIES -ge 15 ]; do
+    if php artisan migrate --force 2>/dev/null; then
+        echo "Migrations complete!"
         break
     fi
     TRIES=$((TRIES+1))
-    echo "  Waiting for database... ($TRIES/45)"
-    sleep 2
+    echo "  Migration attempt $TRIES/15 failed, retrying in 5s..."
+    sleep 5
 done
 
-if [ "$DB_READY" = true ]; then
-    php artisan migrate --force
-    echo "Migrations complete."
-else
-    echo "Database not ready - serving with file sessions only."
+if [ $TRIES -ge 15 ]; then
+    echo "WARNING: Migrations failed after 15 attempts"
 fi
 
-# Start the server (NO config:cache - let Laravel read env vars directly)
+# Cache views
+php artisan view:cache 2>/dev/null
+
+# Start the server
 php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
