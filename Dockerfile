@@ -14,6 +14,11 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 COPY . .
 
+# Remove any cached config from local dev
+RUN rm -f bootstrap/cache/config.php \
+    && rm -f bootstrap/cache/routes-v7.php \
+    && rm -f bootstrap/cache/views.php
+
 RUN chmod +x start.sh
 
 EXPOSE 8000
