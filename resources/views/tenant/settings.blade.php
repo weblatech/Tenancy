@@ -1499,7 +1499,7 @@
             
             <!-- Iframe Canvas frame wrapper -->
             <div id="preview-frame-wrapper" class="w-full max-w-5xl h-[calc(100vh-165px)] bg-white rounded-b-2xl border border-slate-800 overflow-hidden shadow-2xl transition-all duration-300">
-                <iframe id="preview-iframe" src="/" class="w-full h-full border-0"></iframe>
+                <iframe id="preview-iframe" src="{{ tenant_store_url('/') }}" class="w-full h-full border-0"></iframe>
             </div>
         </main>
     </div>
