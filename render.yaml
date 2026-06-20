@@ -19,39 +19,7 @@ services:
         value: saas-ecommerce-xx7e.onrender.com,localhost,127.0.0.1
       - key: DB_CONNECTION
         value: pgsql
-      - key: DB_HOST
-        fromDatabase:
-          name: saas-ecommerce-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: saas-ecommerce-db
-          property: port
-      - key: DB_DATABASE
-        fromDatabase:
-          name: saas-ecommerce-db
-          property: database
-      - key: DB_USERNAME
-        fromDatabase:
-          name: saas-ecommerce-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: saas-ecommerce-db
-          property: password
       - key: DB_SSLMODE
         value: prefer
-      - key: SESSION_DRIVER
-        value: database
-      - key: CACHE_STORE
-        value: database
-      - key: QUEUE_CONNECTION
-        value: database
       - key: LOG_LEVEL
         value: debug
-
-databases:
-  - name: saas-ecommerce-db
-    plan: free
-    databaseName: saas_ecommerce
-    ipAllowList: []
