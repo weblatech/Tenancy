@@ -27,4 +27,4 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 EXPOSE 80
 
 # سرور سٹارٹ ہونے پر مائیگریشن چلائیں اور پھر اپاچی چلائیں
-CMD bash -c "php artisan migrate --force && php artisan config:cache && apache2-foreground"
+CMD bash -c "php artisan cache:clear && php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan migrate --force && apache2-foreground"
