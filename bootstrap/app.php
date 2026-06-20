@@ -12,9 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         // یہاں ہم نے دکان (Tenant) کے راستوں کو لاراویل 12 کے مطابق رجسٹر کر دیا ہے
         then: function () {
-            Route::middleware([
-                'web',
-            ])->group(dirname(__DIR__) . '/routes/tenant.php');
+            require dirname(__DIR__) . '/routes/tenant.php';
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
