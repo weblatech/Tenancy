@@ -63,6 +63,15 @@ Route::domain($domainToRegister)->group(function () {
             }
         });
 
+        Route::get('/seed-admin', function () {
+            try {
+                \Artisan::call('db:seed', ['--class' => 'DatabaseSeeder', '--force' => true]);
+                return 'Super admin seeded! Email: admin@saascommerce.com / Password: admin123<br>Go to <a href="/login">Login</a>';
+            } catch (\Exception $e) {
+                return 'Error: ' . $e->getMessage();
+            }
+        });
+
         // سپر ایڈمن ڈیش بورڈ کے راؤٹس
         Route::middleware(['auth', \App\Http\Middleware\SuperAdminMiddleware::class])->prefix('admin')->group(function () {
             Route::get('/', [\App\Http\Controllers\SuperAdminController::class, 'dashboard']);
