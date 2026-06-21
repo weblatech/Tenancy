@@ -18,6 +18,11 @@ Route::domain($domainToRegister)->group(function () {
         // یوزر ڈیش بورڈ
         Route::get('/dashboard', function () {
             $user = Auth::user();
+            
+            if ($user && $user->is_super_admin) {
+                return redirect('/admin');
+            }
+
             $productCount = 0;
             $orderCount = 0;
             $pendingOrdersCount = 0;
