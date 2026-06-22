@@ -162,6 +162,7 @@ async function loadContacts() {
 
 function renderContacts(contacts) {
     const list = document.getElementById('contactsList');
+    if (!list) return;
     if (!contacts.length) {
         list.innerHTML = '<div class="flex items-center justify-center p-8 text-gray-400 text-sm">No conversations yet. Click + to start one.</div>';
         return;
@@ -226,6 +227,7 @@ async function loadMessages(convId) {
 
 function renderMessages(messages) {
     const chatBox = document.getElementById('chatBox');
+    if (!chatBox) return;
     chatBox.innerHTML = '';
 
     if (!messages.length) {
@@ -261,6 +263,7 @@ async function sendMessage() {
 
     // Optimistic UI
     const chatBox = document.getElementById('chatBox');
+    if (!chatBox) return;
     const emptyState = chatBox.querySelector('.text-center');
     if (emptyState) emptyState.remove();
 
@@ -284,7 +287,14 @@ async function sendMessage() {
         const result = await resp.json();
 
         const el = document.getElementById(tempId);
-        if (!el) return;
+        if (!el) {
+            if (!result.success) {
+                let errMsg = result.error || 'Send failed';
+                if (result.hint) errMsg += '\n' + result.hint;
+                showToast(errMsg, 'error');
+            }
+            return;
+        }
         const tickEl = el.querySelector('.ml-1');
 
         if (result.success) {
