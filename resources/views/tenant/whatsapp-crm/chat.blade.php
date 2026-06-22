@@ -291,7 +291,9 @@ async function sendMessage() {
             if (tickEl) tickEl.outerHTML = '<svg class="w-4 h-4 text-[#53bdeb] ml-1 inline" fill="currentColor" viewBox="0 0 24 24"><path d="M18 7l-8 8-3-3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M22 7l-8 8-1-1" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
         } else {
             if (tickEl) tickEl.outerHTML = '<svg class="w-4 h-4 text-yellow-500 ml-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
-            if (result.error) showToast(result.error, 'error');
+            let errMsg = result.error || 'Send failed';
+            if (result.hint) errMsg += '\n' + result.hint;
+            showToast(errMsg, 'error');
         }
     } catch (e) {
         showToast('Send failed: ' + e.message, 'error');
@@ -391,10 +393,10 @@ function showToast(msg, type) {
     if (existing) existing.remove();
     const colors = { success: 'bg-emerald-600', warning: 'bg-amber-500', error: 'bg-rose-500' };
     const toast = document.createElement('div');
-    toast.className = `wa-toast fixed top-4 right-4 z-50 ${colors[type] || 'bg-slate-700'} text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl max-w-xs`;
+    toast.className = `wa-toast fixed top-4 right-4 z-50 ${colors[type] || 'bg-slate-700'} text-white text-[11px] font-bold px-4 py-3 rounded-xl shadow-2xl max-w-sm whitespace-pre-line`;
     toast.textContent = msg;
     document.body.appendChild(toast);
-    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 5000);
 }
 
 document.getElementById('msgInput').addEventListener('input', function() {

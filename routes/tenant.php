@@ -500,10 +500,12 @@ Route::middleware([
     Route::get('/shop/whatsapp-crm', function () {
         $settings = App\Models\StoreSetting::firstOrCreate(['id' => 1]);
         $whatsapp = new \App\Services\WhatsAppCRM();
+        $provider = \App\Services\WhatsAppCRM::getProvider();
         return view('tenant.whatsapp-crm.index', [
             'tenantId' => tenant('id'),
             'settings' => $settings,
             'isConfigured' => $whatsapp->isConfigured(),
+            'hasProvider' => (bool) $provider,
         ]);
     });
 
@@ -666,14 +668,25 @@ Route::middleware([
         // Send via WhatsApp Cloud API
         $sent = false;
         $sendError = null;
+        $sendHint = null;
         $whatsapp = new \App\Services\WhatsAppCRM();
 
         if ($whatsapp->isConfigured()) {
             $result = $whatsapp->sendChatMessage($customerPhone, $request->message, (int) $id);
             $sent = $result['success'] ?? false;
-            if (!$sent) $sendError = $result['error'] ?? 'API send failed';
+            if (!$sent) {
+                $sendError = $result['error'] ?? 'API send failed';
+                $sendHint = $result['hint'] ?? null;
+            }
         } else {
-            $sendError = 'WhatsApp API not configured. Set up in CRM Settings.';
+            $provider = \App\Services\WhatsAppCRM::getProvider();
+            if (!$provider) {
+                $sendError = 'API Not Configured — Super Admin has not saved WhatsApp Provider settings yet.';
+                $sendHint = 'Ask your platform admin to save API Key, Phone Number ID and WABA ID at /admin/whatsapp-provider';
+            } else {
+                $sendError = 'API Not Configured — Save your Phone Number ID in CRM Settings.';
+                $sendHint = 'Go to /shop/whatsapp-crm and enter your Phone Number ID.';
+            }
         }
 
         // Update message status
@@ -684,6 +697,7 @@ Route::middleware([
         return response()->json([
             'success' => $sent,
             'error' => $sendError,
+            'hint' => $sendHint,
             'message_id' => $msgId,
             'status' => $newStatus,
             'message' => $request->message,
@@ -2067,11 +2081,26 @@ Route::middleware([
     Route::get('/webhook/whatsapp/{tenantId}', function ($tenantId, Request $request) {
         $verifyToken = $request->query('hub_verify_token');
         $settings = App\Models\StoreSetting::firstOrCreate(['id' => 1]);
-        
-        if ($verifyToken === $settings->whatsapp_verify_token) {
+
+        // Check tenant settings verify token first
+        $tenantToken = $settings->whatsapp_verify_token ?? '';
+
+        // Fallback: check central provider verify token
+        $centralToken = '';
+        try {
+            $provider = \DB::connection(config('tenancy.database.central_connection'))
+                ->table('whatsapp_providers')
+                ->where('is_active', true)
+                ->first();
+            $centralToken = $provider->verify_token ?? '';
+        } catch (\Exception $e) {}
+
+        if (($verifyToken === $tenantToken && !empty($tenantToken))
+            || ($verifyToken === $centralToken && !empty($centralToken))) {
             return response($request->query('hub_challenge'), 200)->header('Content-Type', 'text/plain');
         }
-        
+
+        Log::warning('Webhook verify failed', ['sent' => $verifyToken, 'tenant' => $tenantToken, 'central' => $centralToken]);
         return response('Forbidden', 403);
     });
 

@@ -28,10 +28,15 @@ class WhatsAppCRM
      */
     public static function getProvider(): ?object
     {
-        return \DB::connection(config('tenancy.database.central_connection'))
-            ->table('whatsapp_providers')
-            ->where('is_active', true)
-            ->first();
+        try {
+            return \DB::connection(config('tenancy.database.central_connection'))
+                ->table('whatsapp_providers')
+                ->where('is_active', true)
+                ->first();
+        } catch (\Exception $e) {
+            Log::error('WhatsApp getProvider error: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**
@@ -40,7 +45,21 @@ class WhatsAppCRM
     public function isConfigured(): bool
     {
         $provider = self::getProvider();
-        return $provider && !empty($this->settings->whatsapp_crm_active) && !empty($this->settings->whatsapp_phone_number_id);
+        $hasCrmActive = !empty($this->settings->whatsapp_crm_active);
+        $hasPhoneId = !empty($this->settings->whatsapp_phone_number_id);
+        $hasApiKey = !empty($this->getApiKey());
+
+        if (!$provider) {
+            Log::warning('WhatsApp CRM: No active provider in central DB');
+        }
+        if (!$hasCrmActive) {
+            Log::warning('WhatsApp CRM: whatsapp_crm_active is false for tenant ' . tenant('id'));
+        }
+        if (!$hasPhoneId) {
+            Log::warning('WhatsApp CRM: whatsapp_phone_number_id is empty for tenant ' . tenant('id'));
+        }
+
+        return $provider && $hasCrmActive && $hasPhoneId && $hasApiKey;
     }
 
     /**
@@ -53,11 +72,15 @@ class WhatsAppCRM
     }
 
     /**
-     * Get the phone number ID from tenant settings
+     * Get the phone number ID from tenant settings (preferred) or provider (fallback)
      */
     public function getPhoneNumberId(): string
     {
-        return $this->phoneNumberId;
+        if (!empty($this->phoneNumberId)) {
+            return $this->phoneNumberId;
+        }
+        $provider = self::getProvider();
+        return $provider->phone_number_id ?? '';
     }
 
     /**
@@ -314,6 +337,19 @@ class WhatsAppCRM
             $apiKey = $this->getApiKey();
             $phoneId = $this->getPhoneNumberId();
 
+            if (empty($apiKey)) {
+                return ['success' => false, 'error' => 'API Key (Access Token) is empty. Save it in Super Admin > WhatsApp Provider.'];
+            }
+            if (empty($phoneId)) {
+                return ['success' => false, 'error' => 'Phone Number ID is empty. Save it in CRM Settings.'];
+            }
+
+            Log::info('WhatsApp API Request', [
+                'url' => "{$this->baseUrl}/{$phoneId}/messages",
+                'to' => $phone,
+                'type' => $type,
+            ]);
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
@@ -322,11 +358,34 @@ class WhatsAppCRM
                 $payload
             );
 
+            $body = $response->json();
+
             $result = [
                 'success' => $response->successful(),
                 'status_code' => $response->status(),
-                'response' => $response->json(),
+                'response' => $body,
             ];
+
+            if (!$response->successful()) {
+                $errorMsg = $body['error']['message'] ?? 'Unknown error';
+                $errorCode = $body['error']['code'] ?? 0;
+                Log::error('WhatsApp API Error', [
+                    'status' => $response->status(),
+                    'error_code' => $errorCode,
+                    'error_message' => $errorMsg,
+                    'phone' => $phone,
+                    'phone_id' => $phoneId,
+                ]);
+                $result['error'] = "Meta API Error ({$errorCode}): {$errorMsg}";
+
+                if (str_contains($errorMsg, 'Invalid parameter')) {
+                    $result['hint'] = 'Test WABA can only send to verified test numbers. Add your phone in Meta Dashboard > WhatsApp > API Setup > To.';
+                } elseif (str_contains($errorMsg, 'OAuthException') || str_contains($errorMsg, 'access token')) {
+                    $result['hint'] = 'Access token is invalid or expired. Generate a new permanent token in Meta Business Manager > System Users.';
+                } elseif (str_contains($errorMsg, 'Phone number')) {
+                    $result['hint'] = 'Phone Number ID is incorrect. Check it in Meta Dashboard > WhatsApp > API Setup.';
+                }
+            }
 
             // Log to whatsapp_messages if we have an order
             if ($orderId > 0) {
@@ -335,7 +394,7 @@ class WhatsAppCRM
 
             return $result;
         } catch (\Exception $e) {
-            Log::error('WhatsApp API Error: ' . $e->getMessage());
+            Log::error('WhatsApp API Exception: ' . $e->getMessage());
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
