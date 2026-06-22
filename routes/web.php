@@ -110,7 +110,7 @@ Route::domain($domainToRegister)->group(function () {
                 // Get store statuses
                 $storeStatuses = [];
                 foreach (\Stancl\Tenancy\Database\Models\Tenant::all() as $tenant) {
-                    \Stancl\Tenancy\Tenancy::initialize($tenant);
+                    tenancy()->initialize($tenant);
                     $settings = \App\Models\StoreSetting::firstOrCreate(['id' => 1]);
                     $messagesSent = \DB::table('whatsapp_messages')->where('tenant_id', $tenant->id)->count();
                     $conversations = \DB::table('whatsapp_conversations')->where('tenant_id', $tenant->id)->count();
@@ -122,7 +122,7 @@ Route::domain($domainToRegister)->group(function () {
                         'messages_sent' => $messagesSent,
                         'conversations' => $conversations,
                     ];
-                    \Stancl\Tenancy\Tenancy::end();
+                    tenancy()->end();
                 }
 
                 return view('super-admin.whatsapp-provider.index', [

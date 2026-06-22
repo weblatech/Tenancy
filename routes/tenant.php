@@ -1998,7 +1998,7 @@ Route::middleware([
         
         // Initialize tenancy for this tenant
         try {
-            \Stancl\Tenancy\Tenancy::initialize(tenant($tenantId));
+            tenancy()->initialize(tenant($tenantId));
         } catch (\Exception $e) {
             return response('Tenant not found', 404);
         }
