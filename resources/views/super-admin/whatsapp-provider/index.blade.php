@@ -66,8 +66,9 @@
                     <input type="text" name="phone_number_id" value="{{ $provider->phone_number_id ?? '' }}" placeholder="1234567890" class="w-full px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition placeholder-slate-400">
                 </div>
                 <div>
-                    <label class="block text-xs font-black text-slate-500 mb-2 uppercase tracking-wider">Business Account ID</label>
-                    <input type="text" name="business_account_id" value="{{ $provider->business_account_id ?? '' }}" placeholder="Optional" class="w-full px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition placeholder-slate-400">
+                    <label class="block text-xs font-black text-slate-500 mb-2 uppercase tracking-wider">WhatsApp Business Account ID (WABA ID)</label>
+                    <input type="text" name="business_account_id" value="{{ $provider->business_account_id ?? '' }}" placeholder="NOT Business Manager ID" class="w-full px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition placeholder-slate-400">
+                    <p class="text-[10px] text-rose-500 font-bold mt-1">NOT your Business Manager ID! Get WABA ID from: WhatsApp Manager → WhatsApp Business Accounts</p>
                 </div>
                 <div>
                     <label class="block text-xs font-black text-slate-500 mb-2 uppercase tracking-wider">Verify Token</label>
@@ -75,9 +76,13 @@
                 </div>
             </div>
 
-            <div class="mt-4 p-4 bg-green-50/60 border border-green-100/60 rounded-2xl">
-                <p class="text-xs text-green-800 font-semibold leading-relaxed">
-                    <strong>Setup Instructions:</strong> Create a WhatsApp Business API app at <a href="https://developers.facebook.com/" target="_blank" class="underline">developers.facebook.com</a>. Get your Access Token and Phone Number ID from the app dashboard. Each store owner will use this shared API connection with their own WhatsApp phone number.
+            <div class="mt-4 p-4 bg-amber-50/60 border border-amber-100/60 rounded-2xl">
+                <p class="text-xs text-amber-800 font-semibold leading-relaxed">
+                    <strong>Where to find these:</strong><br>
+                    • <strong>Access Token:</strong> Meta Developers → System Users → Generate Token (with whatsapp_business_management + messaging permissions)<br>
+                    • <strong>Phone Number ID:</strong> WhatsApp Manager → Phone Numbers → Click number → Phone Number ID<br>
+                    • <strong>WABA ID:</strong> WhatsApp Manager → WhatsApp Business Accounts → Your account ID (NOT Business Manager ID!)<br>
+                    • <strong>Verify Token:</strong> Any custom string you choose (e.g. my_verify_2024) — must match Meta webhook config
                 </p>
             </div>
         </div>
