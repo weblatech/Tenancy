@@ -435,6 +435,38 @@ Route::middleware([
             'tenantId' => tenant('id'),
             'storeName' => tenant('name') ?? '',
             'isReady' => $registration->isReady(),
+            'phoneNumberId' => $settings->whatsapp_phone_number_id ?? '',
+        ]);
+    });
+
+    // AJAX: List existing phone numbers from WABA
+    Route::get('/shop/whatsapp-register/list-numbers', function () {
+        $registration = new \App\Services\WhatsAppRegistration();
+        $result = $registration->listPhoneNumbers();
+        return response()->json($result);
+    });
+
+    // AJAX: Select an existing phone number (no OTP needed)
+    Route::post('/shop/whatsapp-register/select-number', function (Request $request) {
+        $request->validate([
+            'phone_number_id' => 'required|string',
+        ]);
+
+        $registration = new \App\Services\WhatsAppRegistration();
+        $details = $registration->getPhoneNumberDetails($request->phone_number_id);
+
+        $settings = App\Models\StoreSetting::firstOrCreate(['id' => 1]);
+        $settings->update([
+            'whatsapp_phone_number_id' => $request->phone_number_id,
+            'whatsapp_crm_active' => true,
+            'footer_whatsapp' => $details['phone_number'] ?? $settings->footer_whatsapp ?? '',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'phone_number' => $details['phone_number'] ?? '',
+            'verified_name' => $details['verified_name'] ?? '',
+            'phone_number_id' => $request->phone_number_id,
         ]);
     });
 
