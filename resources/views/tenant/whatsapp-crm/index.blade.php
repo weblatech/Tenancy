@@ -94,7 +94,18 @@
         @endif
 
         <!-- Quick Actions -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            @if(!$isConfigured)
+            <a href="/shop/whatsapp-register" class="card-premium rounded-2xl p-5 flex items-center gap-4 hover:border-green-300 transition group border-2 border-dashed border-green-300 bg-green-50/50">
+                <div class="bg-green-600 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-md shadow-green-500/20 group-hover:scale-105 transition pulse-green">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                </div>
+                <div>
+                    <h3 class="font-black text-sm text-green-800">Connect WhatsApp</h3>
+                    <p class="text-[10px] text-green-600 font-medium">Register your phone number</p>
+                </div>
+            </a>
+            @endif
             <a href="/shop/whatsapp-chat" class="card-premium rounded-2xl p-5 flex items-center gap-4 hover:border-green-300 transition group">
                 <div class="bg-green-600 text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-md shadow-green-500/20 group-hover:scale-105 transition">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>

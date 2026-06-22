@@ -427,6 +427,75 @@ Route::middleware([
         return redirect('/shop/social')->with('success', 'Social Media & Tracking settings updated successfully!');
     });
 
+    // WhatsApp Registration Flow
+    Route::get('/shop/whatsapp-register', function () {
+        $settings = App\Models\StoreSetting::firstOrCreate(['id' => 1]);
+        $registration = new \App\Services\WhatsAppRegistration();
+        return view('tenant.whatsapp-crm.register', [
+            'tenantId' => tenant('id'),
+            'storeName' => tenant('name') ?? '',
+            'isReady' => $registration->isReady(),
+        ]);
+    });
+
+    Route::post('/shop/whatsapp-register/send-otp', function (Request $request) {
+        $request->validate([
+            'phone_number' => 'required|string',
+            'store_name' => 'required|string|max:255',
+        ]);
+
+        $registration = new \App\Services\WhatsAppRegistration();
+        if (!$registration->isReady()) {
+            return response()->json(['success' => false, 'error' => 'WhatsApp Business Account not configured by admin']);
+        }
+
+        $phone = $registration->formatPhone($request->phone_number);
+        $result = $registration->registerPhoneNumber($phone, $request->store_name);
+
+        if ($result['success']) {
+            // Save phone number ID temporarily
+            $settings = App\Models\StoreSetting::firstOrCreate(['id' => 1]);
+            $settings->update(['whatsapp_phone_number_id' => $result['phone_number_id']]);
+
+            return response()->json([
+                'success' => true,
+                'phone_number_id' => $result['phone_number_id'],
+            ]);
+        }
+
+        return response()->json($result);
+    });
+
+    Route::post('/shop/whatsapp-register/verify-otp', function (Request $request) {
+        $request->validate([
+            'phone_number_id' => 'required|string',
+            'code' => 'required|string|size:6',
+        ]);
+
+        $registration = new \App\Services\WhatsAppRegistration();
+        $result = $registration->verifyPhoneNumber($request->phone_number_id, $request->code);
+
+        if ($result['success']) {
+            // Phone verified - get details and save
+            $details = $registration->getPhoneNumberDetails($request->phone_number_id);
+
+            $settings = App\Models\StoreSetting::firstOrCreate(['id' => 1]);
+            $settings->update([
+                'whatsapp_phone_number_id' => $request->phone_number_id,
+                'whatsapp_crm_active' => true,
+                'footer_whatsapp' => $settings->footer_whatsapp ?? $details['phone_number'] ?? '',
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'phone_number' => $details['phone_number'] ?? '',
+                'verified_name' => $details['verified_name'] ?? '',
+            ]);
+        }
+
+        return response()->json($result);
+    });
+
     // WhatsApp CRM Settings
     Route::get('/shop/whatsapp-crm', function () {
         $settings = App\Models\StoreSetting::firstOrCreate(['id' => 1]);
