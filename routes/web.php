@@ -59,15 +59,6 @@ Route::domain($domainToRegister)->group(function () {
         // بریز کے لاگ ان اور رجسٹریشن والے راؤٹس
         require __DIR__.'/auth.php';
 
-        // Public legal pages
-        Route::get('/privacy-policy', function () {
-            return view('privacy-policy');
-        });
-
-        Route::get('/terms-of-service', function () {
-            return view('terms-of-service');
-        });
-
         // ہوسٹنگ پر بغیر SSH مائگریشن رن کرنے کے لیے عارضی راؤٹ
         Route::get('/run-migrations', function () {
             try {
@@ -168,3 +159,12 @@ Route::domain($domainToRegister)->group(function () {
         });
 
     });
+
+// Public legal pages (outside domain group for Render proxy compatibility)
+Route::get('/privacy-policy', function () {
+    return view('privacy-policy');
+});
+
+Route::get('/terms-of-service', function () {
+    return view('terms-of-service');
+});
