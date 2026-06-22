@@ -540,7 +540,7 @@
                             </ul>
                         </div>
                         <div class="mt-8">
-                            <a href="{{ route('register') }}" class="block text-center w-full py-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm transition-colors">Start Free Trial</a>
+                            <a href="{{ route('register', ['plan' => 'starter']) }}" class="block text-center w-full py-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm transition-colors">Start Free Trial</a>
                         </div>
                     </div>
 
@@ -565,7 +565,7 @@
                             </ul>
                         </div>
                         <div class="mt-8">
-                            <a href="{{ route('register') }}" class="block text-center w-full py-3 rounded-xl bg-brand-800 hover:bg-brand-700 text-white font-bold text-sm shadow-lg shadow-brand-900/20 transition-all hover:-translate-y-0.5">Start Free Trial</a>
+                            <a href="{{ route('register', ['plan' => 'growth']) }}" class="block text-center w-full py-3 rounded-xl bg-brand-800 hover:bg-brand-700 text-white font-bold text-sm shadow-lg shadow-brand-900/20 transition-all hover:-translate-y-0.5">Start Free Trial</a>
                         </div>
                     </div>
 
@@ -589,7 +589,7 @@
                             </ul>
                         </div>
                         <div class="mt-8">
-                            <a href="{{ route('register') }}" class="block text-center w-full py-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm transition-colors">Start Free Trial</a>
+                            <a href="{{ route('register', ['plan' => 'enterprise']) }}" class="block text-center w-full py-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm transition-colors">Start Free Trial</a>
                         </div>
                     </div>
                 </div>

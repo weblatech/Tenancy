@@ -1,6 +1,30 @@
 <x-guest-layout>
+    @php
+        $currentPlan = $selectedPlan ?? 'starter';
+        $planData = $plans[$currentPlan] ?? $plans['starter'];
+    @endphp
+
+    <div class="mb-6 p-4 bg-brand-50 border border-brand-200 rounded-xl">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="font-bold text-gray-900">{{ $planData['name'] }} Plan</h3>
+                <p class="text-sm text-gray-600">${{ $planData['price'] }}/month &bull; 14-day free trial</p>
+            </div>
+            <a href="{{ route('register') }}" class="text-sm text-brand-700 hover:text-brand-800 font-semibold">Change</a>
+        </div>
+        <ul class="mt-3 space-y-1.5">
+            @foreach($planData['features'] as $feature)
+                <li class="flex items-center gap-2 text-sm text-gray-700">
+                    <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    {{ $feature }}
+                </li>
+            @endforeach
+        </ul>
+    </div>
+
     <form method="POST" action="{{ route('register') }}">
         @csrf
+        <input type="hidden" name="plan" value="{{ $currentPlan }}">
 
         <!-- Name -->
         <div>
