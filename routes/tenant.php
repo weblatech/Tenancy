@@ -479,63 +479,69 @@ Route::middleware([
     Route::get('/shop/whatsapp-chat', function () {
         $settings = App\Models\StoreSetting::firstOrCreate(['id' => 1]);
         $storePhone = $settings->footer_whatsapp ?? '';
-
-        $orders = App\Models\Order::latest()->get()->map(function ($order) use ($settings) {
-            $lastMsg = \DB::table('whatsapp_messages')
-                ->where('tenant_id', tenant('id'))
-                ->where('to_phone', $order->customer_phone)
-                ->orWhere('from_phone', $order->customer_phone)
-                ->orderByDesc('created_at')
-                ->first();
-
-            $outboundCount = \DB::table('whatsapp_messages')
-                ->where('tenant_id', tenant('id'))
-                ->where('to_phone', $order->customer_phone)
-                ->orWhere('from_phone', $order->customer_phone)
-                ->where('direction', 'outbound')
-                ->count();
-
-            return (object)[
-                'id' => $order->id,
-                'customer' => $order->customer_name,
-                'mobile' => $order->customer_phone,
-                'status' => $order->status,
-                'total' => $order->total,
-                'last_message' => $lastMsg ? $lastMsg->message_body : null,
-                'last_message_at' => $lastMsg ? $lastMsg->created_at : $order->created_at,
-            ];
-        });
+        $isConfigured = (new \App\Services\WhatsAppCRM())->isConfigured();
 
         return view('tenant.whatsapp-crm.chat', [
             'tenantId' => tenant('id'),
-            'orders' => $orders,
             'storePhone' => $storePhone,
+            'isConfigured' => $isConfigured,
         ]);
     });
 
-    // AJAX: Get chat messages for an order
+    // AJAX: Get contacts list (conversations from local DB)
+    Route::get('/shop/whatsapp-chat/contacts', function () {
+        $tenantId = tenant('id');
+
+        $conversations = \DB::table('whatsapp_conversations')
+            ->where('tenant_id', $tenantId)
+            ->orderByDesc('last_message_at')
+            ->get();
+
+        $contacts = [];
+        foreach ($conversations as $conv) {
+            $lastMsg = \DB::table('whatsapp_messages')
+                ->where('conversation_id', $conv->id)
+                ->orderByDesc('created_at')
+                ->first();
+
+            $contacts[] = [
+                'id' => $conv->id,
+                'order_id' => $conv->order_id,
+                'customer_name' => $conv->customer_name,
+                'customer_phone' => $conv->customer_phone,
+                'status' => $conv->status,
+                'unread_count' => $conv->unread_count ?? 0,
+                'last_message' => $lastMsg ? $lastMsg->message_body : null,
+                'last_message_at' => $lastMsg ? $lastMsg->created_at : $conv->last_message_at,
+            ];
+        }
+
+        return response()->json(['contacts' => $contacts]);
+    });
+
+    // AJAX: Get chat messages for a conversation
     Route::get('/shop/whatsapp-chat/{id}/messages', function ($id) {
-        $order = App\Models\Order::find($id);
-        if (!$order) {
-            return response()->json(['error' => 'Order not found'], 404);
+        $conversation = \DB::table('whatsapp_conversations')
+            ->where('tenant_id', tenant('id'))
+            ->where('id', $id)
+            ->first();
+
+        if (!$conversation) {
+            return response()->json(['error' => 'Conversation not found'], 404);
         }
 
         $messages = \DB::table('whatsapp_messages')
-            ->where('tenant_id', tenant('id'))
-            ->where(function ($q) use ($order) {
-                $q->where('to_phone', $order->customer_phone)
-                  ->orWhere('from_phone', $order->customer_phone);
-            })
+            ->where('conversation_id', $id)
             ->orderBy('created_at')
             ->get();
 
         return response()->json([
-            'order' => [
-                'id' => $order->id,
-                'customer' => $order->customer_name,
-                'mobile' => $order->customer_phone,
-                'status' => $order->status,
-                'total' => $order->total,
+            'conversation' => [
+                'id' => $conversation->id,
+                'order_id' => $conversation->order_id,
+                'customer_name' => $conversation->customer_name,
+                'customer_phone' => $conversation->customer_phone,
+                'status' => $conversation->status,
             ],
             'messages' => $messages,
         ]);
@@ -544,19 +550,26 @@ Route::middleware([
     Route::post('/shop/whatsapp-chat/{id}/send', function ($id, Request $request) {
         $request->validate(['message' => 'required|string|max:4000']);
 
-        $order = App\Models\Order::find($id);
-        if (!$order) {
-            return response()->json(['success' => false, 'error' => 'Order not found'], 404);
+        $conversation = \DB::table('whatsapp_conversations')
+            ->where('tenant_id', tenant('id'))
+            ->where('id', $id)
+            ->first();
+
+        if (!$conversation) {
+            return response()->json(['success' => false, 'error' => 'Conversation not found'], 404);
         }
 
         // Handle label change (internal, not sent to customer)
         if (str_starts_with($request->message, '__label__')) {
             $label = substr($request->message, 9);
-            $order->update(['status' => $label === 'None' ? 'Unfulfilled' : $label]);
+            if ($conversation->order_id) {
+                App\Models\Order::where('id', $conversation->order_id)->update(['status' => $label === 'None' ? 'Unfulfilled' : $label]);
+            }
+            \DB::table('whatsapp_conversations')->where('id', $id)->update(['status' => $label === 'None' ? 'open' : strtolower(str_replace(' ', '_', $label))]);
             return response()->json(['success' => true, 'status' => 'label_changed', 'label' => $label]);
         }
 
-        $customerPhone = preg_replace('/[^0-9]/', '', $order->customer_phone);
+        $customerPhone = preg_replace('/[^0-9]/', '', $conversation->customer_phone);
         if (strlen($customerPhone) === 11 && str_starts_with($customerPhone, '0')) {
             $customerPhone = '92' . substr($customerPhone, 1);
         } elseif (strlen($customerPhone) === 10) {
@@ -566,31 +579,9 @@ Route::middleware([
         $settings = App\Models\StoreSetting::firstOrCreate(['id' => 1]);
         $storePhone = $settings->footer_whatsapp ?? '';
 
-        // Ensure conversation exists for this order
-        $conversation = \DB::table('whatsapp_conversations')
-            ->where('tenant_id', tenant('id'))
-            ->where('order_id', $id)
-            ->first();
-
-        if (!$conversation) {
-            $convId = \DB::table('whatsapp_conversations')->insertGetId([
-                'tenant_id' => tenant('id'),
-                'order_id' => $id,
-                'customer_name' => $order->customer_name,
-                'customer_phone' => $customerPhone,
-                'status' => 'open',
-                'last_message_at' => now(),
-                'unread_count' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } else {
-            $convId = $conversation->id;
-        }
-
         // Save message locally
         $msgId = \DB::table('whatsapp_messages')->insertGetId([
-            'conversation_id' => $convId,
+            'conversation_id' => $id,
             'tenant_id' => tenant('id'),
             'direction' => 'outbound',
             'message_type' => 'manual_chat',
@@ -603,38 +594,23 @@ Route::middleware([
             'updated_at' => now(),
         ]);
 
-        // Try WhatsApp Web Client first
-        $webClient = new \App\Services\WhatsAppWebClient();
+        // Send via WhatsApp Cloud API
         $sent = false;
         $sendError = null;
+        $whatsapp = new \App\Services\WhatsAppCRM();
 
-        if ($webClient->isServerRunning()) {
-            $status = $webClient->getStatus(tenant('id'));
-            if (($status['status'] ?? '') === 'connected') {
-                $result = $webClient->sendMessage(tenant('id'), $customerPhone, $request->message);
-                $sent = $result['success'] ?? false;
-                if (!$sent) $sendError = $result['error'] ?? 'WhatsApp Web send failed';
-            } else {
-                $sendError = 'WhatsApp not connected. Scan QR in CRM settings.';
-            }
-        }
-
-        // Fallback: WhatsApp Cloud API
-        if (!$sent) {
-            $whatsapp = new \App\Services\WhatsAppCRM();
-            if ($whatsapp->isConfigured()) {
-                $result = $whatsapp->sendChatMessage($customerPhone, $request->message, $convId);
-                $sent = $result['success'] ?? false;
-                if (!$sent) $sendError = $result['error'] ?? 'API send failed';
-            } elseif (!$sendError) {
-                $sendError = 'WhatsApp not configured. Link device in CRM settings.';
-            }
+        if ($whatsapp->isConfigured()) {
+            $result = $whatsapp->sendChatMessage($customerPhone, $request->message, (int) $id);
+            $sent = $result['success'] ?? false;
+            if (!$sent) $sendError = $result['error'] ?? 'API send failed';
+        } else {
+            $sendError = 'WhatsApp API not configured. Set up in CRM Settings.';
         }
 
         // Update message status
         $newStatus = $sent ? 'sent' : 'saved';
         \DB::table('whatsapp_messages')->where('id', $msgId)->update(['status' => $newStatus]);
-        \DB::table('whatsapp_conversations')->where('id', $convId)->update(['last_message_at' => now()]);
+        \DB::table('whatsapp_conversations')->where('id', $id)->update(['last_message_at' => now()]);
 
         return response()->json([
             'success' => $sent,
@@ -649,10 +625,47 @@ Route::middleware([
     Route::post('/shop/whatsapp-chat/{id}/close', function ($id) {
         \DB::table('whatsapp_conversations')
             ->where('tenant_id', tenant('id'))
-            ->where('order_id', $id)
+            ->where('id', $id)
             ->update(['status' => 'closed']);
 
         return redirect('/shop/whatsapp-chat');
+    });
+
+    // AJAX: Create new conversation (start chat with new customer)
+    Route::post('/shop/whatsapp-chat/new', function (Request $request) {
+        $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'customer_phone' => 'required|string|max:20',
+        ]);
+
+        $phone = preg_replace('/[^0-9]/', '', $request->customer_phone);
+        if (strlen($phone) === 11 && str_starts_with($phone, '0')) {
+            $phone = '92' . substr($phone, 1);
+        }
+
+        // Check if conversation already exists for this phone
+        $existing = \DB::table('whatsapp_conversations')
+            ->where('tenant_id', tenant('id'))
+            ->where('customer_phone', $phone)
+            ->where('status', '!=', 'closed')
+            ->first();
+
+        if ($existing) {
+            return response()->json(['success' => true, 'conversation_id' => $existing->id, 'existing' => true]);
+        }
+
+        $convId = \DB::table('whatsapp_conversations')->insertGetId([
+            'tenant_id' => tenant('id'),
+            'customer_name' => $request->customer_name,
+            'customer_phone' => $phone,
+            'status' => 'open',
+            'last_message_at' => now(),
+            'unread_count' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['success' => true, 'conversation_id' => $convId, 'existing' => false]);
     });
 
     // Custom Domain Settings
@@ -2009,98 +2022,57 @@ Route::middleware([
         return response()->json($result);
     });
 
-    // WhatsApp Web Client API (connected via Node.js Baileys server)
-    Route::get('/whatsapp-web/status', function () {
-        $client = new \App\Services\WhatsAppWebClient();
-        return response()->json($client->getStatus(tenant('id')));
-    });
-
-    Route::get('/whatsapp-web/qr', function () {
-        $client = new \App\Services\WhatsAppWebClient();
-        return response()->json($client->getQR(tenant('id')));
-    });
-
-    Route::post('/whatsapp-web/start', function () {
-        $client = new \App\Services\WhatsAppWebClient();
-        $result = $client->startSession(tenant('id'));
-        // Register webhook URL for incoming messages
-        $webhookUrl = url('/whatsapp-web');
-        $client->setWebhook(tenant('id'), $webhookUrl);
-        return response()->json($result);
-    });
-
-    Route::post('/whatsapp-web/logout', function () {
-        $client = new \App\Services\WhatsAppWebClient();
-        return response()->json($client->logout(tenant('id')));
-    });
-
-    Route::post('/whatsapp-web/send', function (Request $request) {
-        $request->validate(['to' => 'required', 'message' => 'required|string|max:4000']);
-        $client = new \App\Services\WhatsAppWebClient();
-        $result = $client->sendMessage(tenant('id'), $request->to, $request->message);
-        return response()->json($result);
-    });
-
-    // Incoming message webhook from Node.js server
-    Route::post('/whatsapp-web/incoming', function (Request $request) {
-        $data = $request->all();
-        $tenantId = $data['tenantId'] ?? null;
-        $message = $data['message'] ?? [];
-
-        if (!$tenantId || !$message || empty($message['from']) || empty($message['text'])) {
-            return response()->json(['status' => 'ignored']);
+    // Cloud API incoming webhook - store messages from customers
+    Route::post('/webhook/whatsapp/{tenantId}/incoming', function ($tenantId, Request $request) {
+        $payload = $request->all();
+        try {
+            tenancy()->initialize(tenant($tenantId));
+        } catch (\Exception $e) {
+            return response('Tenant not found', 404);
         }
 
-        $from = preg_replace('/[^0-9]/', '', $message['from']);
-        if (strlen($from) === 11 && str_starts_with($from, '0')) {
-            $from = '92' . substr($from, 1);
-        } elseif (strlen($from) === 10) {
-            $from = '92' . $from;
-        }
+        $entry = $payload['entry'][0] ?? null;
+        $changes = $entry['changes'][0] ?? null;
+        $messages = ($changes['value'] ?? [])['messages'] ?? [];
 
-        // Find conversation by phone
-        $conversation = \DB::table('whatsapp_conversations')
-            ->where('tenant_id', $tenantId)
-            ->where('customer_phone', $from)
-            ->orderByDesc('last_message_at')
-            ->first();
+        foreach ($messages as $msg) {
+            $from = preg_replace('/[^0-9]/', '', $msg['from'] ?? '');
+            $text = $msg['text']['body'] ?? '';
+            $msgType = $msg['type'] ?? 'text';
 
-        if ($conversation) {
-            \DB::table('whatsapp_messages')->insert([
-                'conversation_id' => $conversation->id,
-                'tenant_id' => $tenantId,
-                'direction' => 'inbound',
-                'message_type' => 'text',
-                'message_body' => $message['text'],
-                'from_phone' => $from,
-                'to_phone' => '',
-                'status' => 'received',
-                'is_auto' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            if (!$from || !$text) continue;
 
-            \DB::table('whatsapp_conversations')
-                ->where('id', $conversation->id)
-                ->update([
-                    'last_message_at' => now(),
-                    'unread_count' => \DB::raw('unread_count + 1'),
+            $conversation = \DB::table('whatsapp_conversations')
+                ->where('tenant_id', $tenantId)
+                ->where('customer_phone', $from)
+                ->orderByDesc('last_message_at')
+                ->first();
+
+            if ($conversation) {
+                \DB::table('whatsapp_messages')->insert([
+                    'conversation_id' => $conversation->id,
+                    'tenant_id' => $tenantId,
+                    'direction' => 'inbound',
+                    'message_type' => $msgType,
+                    'message_body' => $text,
+                    'from_phone' => $from,
+                    'to_phone' => '',
+                    'status' => 'received',
+                    'is_auto' => false,
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
+
+                \DB::table('whatsapp_conversations')
+                    ->where('id', $conversation->id)
+                    ->update([
+                        'last_message_at' => now(),
+                        'unread_count' => \DB::raw('unread_count + 1'),
+                    ]);
+            }
         }
 
         return response()->json(['status' => 'processed']);
-    });
-
-    // Status update webhook from Node.js server
-    Route::post('/whatsapp-web/status-update', function (Request $request) {
-        $tenantId = $request->tenantId;
-        if ($tenantId && $tenantId === tenant('id')) {
-            $settings = \App\Models\StoreSetting::firstOrCreate(['id' => 1]);
-            $settings->update([
-                'whatsapp_web_status' => $request->input('status', $request->input('status')),
-            ]);
-        }
-        return response()->json(['status' => 'ok']);
     });
 });
 
