@@ -109,19 +109,23 @@ Route::domain($domainToRegister)->group(function () {
                 
                 // Get store statuses - query shared DB with tenant_id
                 $storeStatuses = [];
-                $tenants = \Stancl\Tenancy\Database\Models\Tenant::all();
-                foreach ($tenants as $tenant) {
-                    $settings = \DB::table('store_settings')->where('id', 1)->first();
-                    $messagesSent = \DB::table('whatsapp_messages')->where('tenant_id', $tenant->id)->count();
-                    $conversations = \DB::table('whatsapp_conversations')->where('tenant_id', $tenant->id)->count();
-                    $storeStatuses[] = [
-                        'tenant_id' => $tenant->id,
-                        'name' => $tenant->name,
-                        'phone' => $settings->whatsapp_phone_number_id ?? '',
-                        'crm_active' => $settings->whatsapp_crm_active ?? false,
-                        'messages_sent' => $messagesSent,
-                        'conversations' => $conversations,
-                    ];
+                try {
+                    $tenants = \Stancl\Tenancy\Database\Models\Tenant::all();
+                    foreach ($tenants as $tenant) {
+                        $settings = \DB::table('store_settings')->where('id', 1)->first();
+                        $messagesSent = \DB::table('whatsapp_messages')->where('tenant_id', $tenant->id)->count();
+                        $conversations = \DB::table('whatsapp_conversations')->where('tenant_id', $tenant->id)->count();
+                        $storeStatuses[] = [
+                            'tenant_id' => $tenant->id,
+                            'name' => $tenant->name,
+                            'phone' => $settings->whatsapp_phone_number_id ?? '',
+                            'crm_active' => $settings->whatsapp_crm_active ?? false,
+                            'messages_sent' => $messagesSent,
+                            'conversations' => $conversations,
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    // Tables may not exist yet
                 }
 
                 return view('super-admin.whatsapp-provider.index', [
