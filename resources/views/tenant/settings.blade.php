@@ -2,6 +2,7 @@
 <html lang="en" class="h-screen overflow-hidden bg-slate-50">
 <head>
     <meta charset="UTF-8">
+    <base href="{{ tenant_store_url('/') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Store Customizer - {{ strtoupper($tenantId) }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
