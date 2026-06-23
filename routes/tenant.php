@@ -462,6 +462,22 @@ Route::middleware([
             'footer_whatsapp' => $details['phone_number'] ?? $settings->footer_whatsapp ?? '',
         ]);
 
+        // Also create/update central phone mapping for universal webhook routing
+        $tenantId = tenant('id');
+        $verifyToken = 'my_platform_verify_2026';
+        \DB::connection(config('tenancy.database.central_connection'))
+            ->table('whatsapp_phone_mappings')
+            ->updateOrInsert(
+                ['phone_number_id' => $request->phone_number_id],
+                [
+                    'tenant_id' => $tenantId,
+                    'verify_token' => $verifyToken,
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+
         return response()->json([
             'success' => true,
             'phone_number' => $details['phone_number'] ?? '',

@@ -92,6 +92,43 @@ Route::domain($domainToRegister)->group(function () {
             }
         });
 
+        Route::get('/seed-phone-mappings', function () {
+            try {
+                $tenants = \Stancl\Tenancy\Database\Models\Tenant::all();
+                $mappings = 0;
+                foreach ($tenants as $tenant) {
+                    try {
+                        tenancy()->initialize($tenant);
+                        $settings = \App\Models\StoreSetting::firstOrCreate(['id' => 1]);
+                        if (!empty($settings->whatsapp_phone_number_id)) {
+                            $exists = \DB::connection(config('tenancy.database.central_connection'))
+                                ->table('whatsapp_phone_mappings')
+                                ->where('phone_number_id', $settings->whatsapp_phone_number_id)
+                                ->exists();
+                            if (!$exists) {
+                                \DB::connection(config('tenancy.database.central_connection'))
+                                    ->table('whatsapp_phone_mappings')->insert([
+                                        'phone_number_id' => $settings->whatsapp_phone_number_id,
+                                        'tenant_id' => $tenant->id,
+                                        'verify_token' => 'my_platform_verify_2026',
+                                        'is_active' => true,
+                                        'created_at' => now(),
+                                        'updated_at' => now(),
+                                    ]);
+                                $mappings++;
+                            }
+                        }
+                        tenancy()->end();
+                    } catch (\Exception $e) {
+                        // Skip tenant
+                    }
+                }
+                return "Phone mappings seeded: {$mappings} new mappings created<br><br><a href='/admin/whatsapp-provider'>Go to WhatsApp Settings →</a>";
+            } catch (\Exception $e) {
+                return 'Error: ' . $e->getMessage();
+            }
+        });
+
         // سپر ایڈمن ڈیش بورڈ کے راؤٹس
         Route::middleware(['auth', \App\Http\Middleware\SuperAdminMiddleware::class])->prefix('admin')->group(function () {
             Route::get('/', [\App\Http\Controllers\SuperAdminController::class, 'dashboard']);
@@ -168,3 +205,7 @@ Route::get('/privacy-policy', function () {
 Route::get('/terms-of-service', function () {
     return view('terms-of-service');
 });
+
+// Universal WhatsApp webhook — outside domain group so it works on root domain
+Route::get('/webhook/whatsapp/universal', [\App\Http\Controllers\WhatsAppWebhookController::class, 'verifyUniversal']);
+Route::post('/webhook/whatsapp/universal', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handleUniversal']);
