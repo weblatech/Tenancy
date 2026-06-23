@@ -1542,14 +1542,13 @@ Route::middleware([
         // Send WhatsApp order pending notification with Confirm/Cancel buttons
         $settings = StoreSetting::firstOrCreate(['id' => 1]);
         if ($settings->whatsapp_crm_active) {
-            $whatsapp = new \App\Services\WhatsAppCRM();
-            if ($whatsapp->isConfigured()) {
-                try {
-                    $whatsapp->sendOrderPending($order);
-                } catch (\Exception $e) {
-                    \Log::error('WhatsApp order pending notification failed: ' . $e->getMessage());
-                }
-            }
+            \App\Jobs\SendWhatsAppMessage::dispatch(
+                tenant('id'),
+                'order_pending',
+                $order->customer_phone,
+                null,
+                $order->id
+            );
         }
 
         return redirect('/order-success/' . $order->id);
@@ -1617,27 +1616,13 @@ Route::middleware([
         // Send WhatsApp notification based on status
         $settings = App\Models\StoreSetting::firstOrCreate(['id' => 1]);
         if ($settings->whatsapp_crm_active) {
-            $whatsapp = new \App\Services\WhatsAppCRM();
-            if ($whatsapp->isConfigured()) {
-                try {
-                    switch ($request->status) {
-                        case 'confirmed':
-                            $whatsapp->sendOrderConfirmed($order);
-                            break;
-                        case 'processing':
-                            $whatsapp->sendOrderProcessing($order);
-                            break;
-                        case 'completed':
-                            $whatsapp->sendOrderCompleted($order);
-                            break;
-                        case 'cancelled':
-                            $whatsapp->sendOrderCancelled($order);
-                            break;
-                    }
-                } catch (\Exception $e) {
-                    \Log::error('WhatsApp notification failed: ' . $e->getMessage());
-                }
-            }
+            \App\Jobs\SendWhatsAppMessage::dispatch(
+                tenant('id'),
+                $request->status,
+                $order->customer_phone,
+                null,
+                $order->id
+            );
         }
 
         return redirect('/shop/orders/' . $id)->with('success', 'Order status updated successfully!');
@@ -2113,119 +2098,9 @@ Route::middleware([
 
 // ============================================================
 // WHATSAPP WEBHOOK ROUTES — OUTSIDE tenant middleware (no CSRF)
+// Uses WhatsAppWebhookController for clean separation of concerns
 // ============================================================
 
-// Webhook verification (GET) — Meta sends this to verify callback URL
-Route::get('/webhook/whatsapp/{tenantId}', function ($tenantId, Request $request) {
-    $verifyToken = $request->query('hub_verify_token');
-    $challenge = $request->query('hub_challenge');
-
-    Log::info('Webhook verification attempt', [
-        'tenant_id' => $tenantId,
-        'token' => $verifyToken,
-        'challenge' => $challenge,
-    ]);
-
-    // Check central provider verify token first
-    $centralToken = '';
-    try {
-        $provider = \DB::connection(config('tenancy.database.central_connection'))
-            ->table('whatsapp_providers')
-            ->where('is_active', true)
-            ->first();
-        $centralToken = $provider->verify_token ?? '';
-    } catch (\Exception $e) {
-        Log::warning('Webhook: Could not load central provider: ' . $e->getMessage());
-    }
-
-    // Fallback: check tenant settings verify token
-    $tenantToken = '';
-    try {
-        if (tenancy()->initialized) {
-            $settings = \App\Models\StoreSetting::firstOrCreate(['id' => 1]);
-            $tenantToken = $settings->whatsapp_verify_token ?? '';
-        }
-    } catch (\Exception $e) {}
-
-    Log::info('Webhook token check', ['central' => $centralToken, 'tenant' => $tenantToken, 'sent' => $verifyToken]);
-
-    if (!empty($verifyToken) && $verifyToken === $centralToken && !empty($centralToken)) {
-        Log::info('Webhook verified successfully (central token)');
-        return response($challenge, 200)->header('Content-Type', 'text/plain');
-    }
-
-    if (!empty($verifyToken) && !empty($tenantToken) && $verifyToken === $tenantToken) {
-        Log::info('Webhook verified successfully (tenant token)');
-        return response($challenge, 200)->header('Content-Type', 'text/plain');
-    }
-
-    Log::warning('Webhook verification FAILED', ['sent' => $verifyToken, 'central' => $centralToken, 'tenant' => $tenantToken]);
-    return response('Forbidden', 403);
-});
-
-// Webhook incoming messages (POST)
-Route::post('/webhook/whatsapp/{tenantId}', function ($tenantId, Request $request) {
-    $payload = $request->all();
-    try {
-        tenancy()->initialize(tenant($tenantId));
-    } catch (\Exception $e) {
-        return response('Tenant not found', 404);
-    }
-
-    $whatsapp = new \App\Services\WhatsAppCRM();
-    $result = $whatsapp->handleWebhook($payload);
-    return response()->json($result);
-});
-
-// Cloud API incoming webhook — store messages from customers
-Route::post('/webhook/whatsapp/{tenantId}/incoming', function ($tenantId, Request $request) {
-    $payload = $request->all();
-    try {
-        tenancy()->initialize(tenant($tenantId));
-    } catch (\Exception $e) {
-        return response('Tenant not found', 404);
-    }
-
-    $entry = $payload['entry'][0] ?? null;
-    $changes = $entry['changes'][0] ?? null;
-    $messages = ($changes['value'] ?? [])['messages'] ?? [];
-
-    foreach ($messages as $msg) {
-        $from = preg_replace('/[^0-9]/', '', $msg['from'] ?? '');
-        $text = $msg['text']['body'] ?? '';
-        $msgType = $msg['type'] ?? 'text';
-
-        if (!$from || !$text) continue;
-
-        $conversation = \DB::table('whatsapp_conversations')
-            ->where('tenant_id', $tenantId)
-            ->where('customer_phone', $from)
-            ->orderByDesc('last_message_at')
-            ->first();
-
-        if ($conversation) {
-            \DB::table('whatsapp_messages')->insert([
-                'conversation_id' => $conversation->id,
-                'tenant_id' => $tenantId,
-                'direction' => 'inbound',
-                'message_type' => $msgType,
-                'message_body' => $text,
-                'from_phone' => $from,
-                'to_phone' => '',
-                'status' => 'received',
-                'is_auto' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            \DB::table('whatsapp_conversations')
-                ->where('id', $conversation->id)
-                ->update([
-                    'last_message_at' => now(),
-                    'unread_count' => \DB::raw('unread_count + 1'),
-                ]);
-        }
-    }
-
-    return response()->json(['status' => 'processed']);
-});
+Route::get('/webhook/whatsapp/{tenantId}', [\App\Http\Controllers\WhatsAppWebhookController::class, 'verify']);
+Route::post('/webhook/whatsapp/{tenantId}', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handle']);
+Route::post('/webhook/whatsapp/{tenantId}/incoming', [\App\Http\Controllers\WhatsAppWebhookController::class, 'incoming']);

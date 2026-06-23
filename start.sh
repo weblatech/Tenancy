@@ -82,5 +82,9 @@ done
 php artisan view:cache 2>/dev/null
 
 echo "Starting server on port ${PORT:-8000}..."
+# Start the queue worker in background (processes WhatsApp messages, etc.)
+php artisan queue:work --sleep=3 --tries=3 --max-time=3600 &
+echo "Queue worker started in background"
+
 # Start the server
 php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
