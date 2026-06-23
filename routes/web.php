@@ -94,19 +94,50 @@ Route::domain($domainToRegister)->group(function () {
 
         Route::get('/seed-phone-mappings', function () {
             try {
-                $tenants = \Stancl\Tenancy\Database\Models\Tenant::all();
+                $tenants = \App\Models\Tenant::all();
                 $mappings = 0;
+
+                $centralConn = config('tenancy.database.central_connection');
+                $tenantDb = config('tenancy.database.prefix') . 'purelife';
+
+                // Just directly insert the known mapping for purelife
+                $exists = \DB::connection($centralConn)
+                    ->table('whatsapp_phone_mappings')
+                    ->where('phone_number_id', '1172546945946113')
+                    ->exists();
+
+                if (!$exists) {
+                    \DB::connection($centralConn)
+                        ->table('whatsapp_phone_mappings')->insert([
+                            'phone_number_id' => '1172546945946113',
+                            'tenant_id' => 'purelife',
+                            'verify_token' => 'my_platform_verify_2026',
+                            'is_active' => true,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    $mappings++;
+                }
+
+                // Try to find any other tenants with phone numbers
                 foreach ($tenants as $tenant) {
+                    if ($tenant->id === 'purelife') continue;
+
                     try {
-                        tenancy()->initialize($tenant);
-                        $settings = \App\Models\StoreSetting::firstOrCreate(['id' => 1]);
-                        if (!empty($settings->whatsapp_phone_number_id)) {
-                            $exists = \DB::connection(config('tenancy.database.central_connection'))
+                        $tenantDbName = config('tenancy.database.prefix') . $tenant->id;
+                        $settings = \DB::connection($tenantDbName)
+                            ->table('store_settings')
+                            ->where('id', 1)
+                            ->first();
+
+                        if ($settings && !empty($settings->whatsapp_phone_number_id)) {
+                            $exists = \DB::connection($centralConn)
                                 ->table('whatsapp_phone_mappings')
                                 ->where('phone_number_id', $settings->whatsapp_phone_number_id)
                                 ->exists();
+
                             if (!$exists) {
-                                \DB::connection(config('tenancy.database.central_connection'))
+                                \DB::connection($centralConn)
                                     ->table('whatsapp_phone_mappings')->insert([
                                         'phone_number_id' => $settings->whatsapp_phone_number_id,
                                         'tenant_id' => $tenant->id,
@@ -118,11 +149,38 @@ Route::domain($domainToRegister)->group(function () {
                                 $mappings++;
                             }
                         }
-                        tenancy()->end();
                     } catch (\Exception $e) {
                         // Skip tenant
                     }
                 }
+
+                // Also check munaa
+                try {
+                    $munaaDb = config('tenancy.database.prefix') . 'munaa';
+                    $munaaSettings = \DB::connection($munaaDb)
+                        ->table('store_settings')
+                        ->where('id', 1)
+                        ->first();
+                    if ($munaaSettings && !empty($munaaSettings->whatsapp_phone_number_id)) {
+                        $exists = \DB::connection($centralConn)
+                            ->table('whatsapp_phone_mappings')
+                            ->where('phone_number_id', $munaaSettings->whatsapp_phone_number_id)
+                            ->exists();
+                        if (!$exists) {
+                            \DB::connection($centralConn)
+                                ->table('whatsapp_phone_mappings')->insert([
+                                    'phone_number_id' => $munaaSettings->whatsapp_phone_number_id,
+                                    'tenant_id' => 'munaa',
+                                    'verify_token' => 'my_platform_verify_2026',
+                                    'is_active' => true,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                            $mappings++;
+                        }
+                    }
+                } catch (\Exception $e) {}
+
                 return "Phone mappings seeded: {$mappings} new mappings created<br><br><a href='/admin/whatsapp-provider'>Go to WhatsApp Settings →</a>";
             } catch (\Exception $e) {
                 return 'Error: ' . $e->getMessage();
