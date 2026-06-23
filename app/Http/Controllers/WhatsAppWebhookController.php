@@ -14,15 +14,6 @@ class WhatsAppWebhookController extends Controller
      * Handle webhook verification from Meta.
      *
      * GET /webhook/whatsapp/{tenantId}
-     *
-     * Meta sends:
-     *   - hub_mode=subscribe
-     *   - hub_verify_token=<your verify token>
-     *   - hub_challenge=<random string to echo back>
-     *
-     * We validate the verify_token against:
-     *  1. The store's whatsapp_verify_token (store_settings table)
-     *  2. The central provider's verify_token (whatsapp_providers table)
      */
     public function verify(Request $request, string $tenantId): Response
     {
@@ -30,36 +21,35 @@ class WhatsAppWebhookController extends Controller
         $token = $request->query('hub_verify_token');
         $challenge = $request->query('hub_challenge');
 
-        Log::info('WhatsApp webhook verification attempt', [
+        Log::info('WhatsApp VERIFY attempt', [
             'store_id' => $tenantId,
-            'mode' => $mode,
-            'token' => $token,
+            'hub_mode' => $mode,
+            'token_received' => $token ? substr($token, 0, 10) . '...' : null,
+            'challenge' => $challenge,
         ]);
 
         if ($mode !== 'subscribe') {
-            Log::warning('WhatsApp verify: invalid mode', ['mode' => $mode]);
+            Log::warning('WhatsApp VERIFY failed: mode != subscribe', ['mode' => $mode]);
             return response('Forbidden', 403);
         }
 
-        // Check token against store settings and central provider
         $service = new WhatsAppService($tenantId);
         $validToken = $service->getVerifyToken();
 
-        if (empty($validToken)) {
-            Log::warning('WhatsApp verify: no verify token configured', ['store_id' => $tenantId]);
-            return response('Forbidden', 403);
-        }
+        Log::info('WhatsApp VERIFY token check', [
+            'store_id' => $tenantId,
+            'valid_token_exists' => !empty($validToken),
+            'match' => $token === $validToken,
+        ]);
 
-        if ($token === $validToken) {
-            Log::info('WhatsApp verify: success', ['store_id' => $tenantId]);
+        if (!empty($validToken) && $token === $validToken) {
+            Log::info('WhatsApp VERIFY SUCCESS', ['store_id' => $tenantId]);
             return response((string) $challenge, 200)
                 ->header('Content-Type', 'text/plain');
         }
 
-        Log::warning('WhatsApp verify: token mismatch', [
+        Log::warning('WhatsApp VERIFY FAILED: token mismatch', [
             'store_id' => $tenantId,
-            'received' => $token,
-            'expected' => $validToken,
         ]);
 
         return response('Forbidden', 403);
@@ -70,34 +60,78 @@ class WhatsAppWebhookController extends Controller
      *
      * POST /webhook/whatsapp/{tenantId}
      *
-     * This receives:
-     *  - Button clicks (confirm_X / cancel_X)
-     *  - Incoming text messages
-     *  - Status updates (delivered, read, failed)
-     *  - Media messages
+     * Meta sends TWO types of payloads:
      *
-     * The payload is dispatched to a queued job for processing.
+     * 1. MESSAGES payload (customer sends a message):
+     *    { "entry": [{ "changes": [{ "value": { "messages": [...], "metadata": {...} } }] }] }
+     *
+     * 2. STATUS payload (message status update):
+     *    { "entry": [{ "changes": [{ "value": { "statuses": [...], "metadata": {...} } }] }] }
      */
     public function handle(Request $request, string $tenantId): Response
     {
         $payload = $request->all();
 
-        Log::info('WhatsApp webhook received', [
+        // Log the FULL raw payload for debugging (first 2000 chars to avoid huge logs)
+        Log::info('WhatsApp WEBHOOK POST received', [
             'store_id' => $tenantId,
-            'method' => $request->method(),
-            'has_entry' => isset($payload['entry']),
+            'payload_size' => strlen(json_encode($payload)),
+            'payload_preview' => substr(json_encode($payload), 0, 2000),
         ]);
 
-        // Validate payload structure
-        if (!isset($payload['entry'][0]['changes'][0])) {
-            Log::warning('WhatsApp webhook: invalid payload structure', ['store_id' => $tenantId]);
+        // Extract metadata (contains phone_number_id, display_phone_number)
+        $metadata = $payload['entry'][0]['changes'][0]['value']['metadata'] ?? null;
+        if ($metadata) {
+            Log::info('WhatsApp WEBHOOK metadata', [
+                'store_id' => $tenantId,
+                'phone_number_id' => $metadata['phone_number_id'] ?? null,
+                'display_phone_number' => $metadata['display_phone_number'] ?? null,
+            ]);
+        }
+
+        // Check for messages
+        $messages = $payload['entry'][0]['changes'][0]['value']['messages'] ?? [];
+        $statuses = $payload['entry'][0]['changes'][0]['value']['statuses'] ?? [];
+
+        Log::info('WhatsApp WEBHOOK payload breakdown', [
+            'store_id' => $tenantId,
+            'has_messages' => count($messages) > 0,
+            'message_count' => count($messages),
+            'has_statuses' => count($statuses) > 0,
+            'status_count' => count($statuses),
+        ]);
+
+        // Validate payload has something to process
+        if (empty($messages) && empty($statuses)) {
+            Log::info('WhatsApp WEBHOOK: no messages or statuses to process', ['store_id' => $tenantId]);
             return response('OK', 200);
         }
 
-        // Dispatch to queue for async processing
-        ProcessWhatsAppWebhook::dispatch($tenantId, $payload);
+        // ── Process SYNCHRONOUSLY for reliability (queue can lose jobs on Render) ──
+        // This ensures messages are never silently dropped
+        try {
+            $job = new ProcessWhatsAppWebhook($tenantId, $payload);
+            $job->handle();
+            Log::info('WhatsApp WEBHOOK: processed synchronously', ['store_id' => $tenantId]);
+        } catch (\Exception $e) {
+            Log::error('WhatsApp WEBHOOK: sync processing failed', [
+                'store_id' => $tenantId,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+        }
 
-        // Return 200 immediately to acknowledge receipt (Meta requires fast response)
+        // Also dispatch to queue as backup (for status updates, follow-ups, etc.)
+        try {
+            ProcessWhatsAppWebhook::dispatch($tenantId, $payload);
+        } catch (\Exception $e) {
+            Log::warning('WhatsApp WEBHOOK: queue dispatch failed (non-critical)', [
+                'store_id' => $tenantId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         return response('OK', 200)
             ->header('Content-Type', 'text/plain');
     }
@@ -106,25 +140,31 @@ class WhatsAppWebhookController extends Controller
      * Handle incoming messages via the alternative incoming webhook endpoint.
      *
      * POST /webhook/whatsapp/{tenantId}/incoming
-     *
-     * This is an alternative endpoint for stores that need a separate
-     * incoming message handler.
      */
     public function incoming(Request $request, string $tenantId): Response
     {
         $payload = $request->all();
 
-        Log::info('WhatsApp incoming webhook', [
+        Log::info('WhatsApp INCOMING webhook', [
             'store_id' => $tenantId,
-            'payload_keys' => array_keys($payload),
+            'payload_preview' => substr(json_encode($payload), 0, 1500),
         ]);
 
         if (!isset($payload['entry'][0]['changes'][0])) {
+            Log::warning('WhatsApp INCOMING: invalid payload structure', ['store_id' => $tenantId]);
             return response('OK', 200);
         }
 
-        // Dispatch to queue
-        ProcessWhatsAppWebhook::dispatch($tenantId, $payload);
+        // Process synchronously
+        try {
+            $job = new ProcessWhatsAppWebhook($tenantId, $payload);
+            $job->handle();
+        } catch (\Exception $e) {
+            Log::error('WhatsApp INCOMING: processing failed', [
+                'store_id' => $tenantId,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response('OK', 200)
             ->header('Content-Type', 'text/plain');
