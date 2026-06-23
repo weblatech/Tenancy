@@ -143,20 +143,34 @@ const quickReplies = [
 
 // Load contacts from local DB
 async function loadContacts() {
+    const contactsList = document.getElementById('contactsList');
+    const contactsLoading = document.getElementById('contactsLoading');
+
+    // Guard: ensure container exists before proceeding
+    if (!contactsList) {
+        console.warn('loadContacts: #contactsList element not found');
+        return;
+    }
+
     try {
         const resp = await fetch('/shop/whatsapp-chat/contacts');
         const data = await resp.json();
         allContacts = data.contacts || [];
 
-        document.getElementById('contactsLoading').style.display = 'none';
+        if (contactsLoading) contactsLoading.style.display = 'none';
+
         const countEl = document.getElementById('contactCount');
-        countEl.textContent = allContacts.length;
-        countEl.classList.remove('hidden');
+        if (countEl) {
+            countEl.textContent = allContacts.length;
+            countEl.classList.remove('hidden');
+        }
 
         renderContacts(allContacts);
     } catch (e) {
         console.error('Load contacts error:', e);
-        document.getElementById('contactsLoading').innerHTML = '<span class="text-red-400">Failed to load</span>';
+        if (contactsLoading) {
+            contactsLoading.innerHTML = '<span class="text-red-400">Failed to load</span>';
+        }
     }
 }
 
@@ -255,6 +269,7 @@ function renderMessages(messages) {
 
 async function sendMessage() {
     const input = document.getElementById('msgInput');
+    if (!input) return;
     const message = input.value.trim();
     if (!message || !currentConversationId) return;
 
@@ -359,31 +374,40 @@ async function createNewChat() {
 
 function setupQuickReplies() {
     const list = document.getElementById('quickReplyList');
+    if (!list) return;
     list.innerHTML = '';
     quickReplies.forEach(reply => {
         const li = document.createElement('li');
         li.className = 'px-4 py-2.5 cursor-pointer hover:bg-green-50 transition-colors border-b border-gray-100 last:border-b-0';
         li.innerHTML = `<strong class="text-sm text-gray-800 block">${escapeHtml(reply.title)}</strong><span class="text-xs text-gray-500 block mt-0.5">${escapeHtml(reply.text.substring(0, 60))}${reply.text.length > 60 ? '...' : ''}</span>`;
         li.onclick = () => {
-            document.getElementById('msgInput').value = reply.text;
-            document.getElementById('quickReplyMenu').classList.add('hidden');
-            document.getElementById('msgInput').focus();
+            const msgInput = document.getElementById('msgInput');
+            if (msgInput) {
+                msgInput.value = reply.text;
+                msgInput.focus();
+            }
+            const menu = document.getElementById('quickReplyMenu');
+            if (menu) menu.classList.add('hidden');
         };
         list.appendChild(li);
     });
 }
 
-function toggleQuickReplies() { document.getElementById('quickReplyMenu').classList.toggle('hidden'); }
+function toggleQuickReplies() {
+    const menu = document.getElementById('quickReplyMenu');
+    if (menu) menu.classList.toggle('hidden');
+}
 
 document.addEventListener('click', (e) => {
     const menu = document.getElementById('quickReplyMenu');
-    if (!menu.contains(e.target) && !e.target.closest('button[onclick*="toggleQuickReplies"]')) {
+    const toggleBtn = e.target.closest('button[onclick*="toggleQuickReplies"]');
+    if (menu && !menu.contains(e.target) && !toggleBtn) {
         menu.classList.add('hidden');
     }
 });
 
 function filterContacts() {
-    const q = document.getElementById('searchInput').value.toLowerCase();
+    const q = document.getElementById('searchInput')?.value?.toLowerCase() || '';
     document.querySelectorAll('.contact-item').forEach(el => {
         const name = (el.dataset.name || '').toLowerCase();
         const phone = (el.dataset.phone || '').toLowerCase();
@@ -409,20 +433,28 @@ function showToast(msg, type) {
     setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 5000);
 }
 
-document.getElementById('msgInput').addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-    if (this.value === '/') document.getElementById('quickReplyMenu').classList.remove('hidden');
-    else if (!this.value.includes('/')) document.getElementById('quickReplyMenu').classList.add('hidden');
-});
-
-document.getElementById('msgInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-});
-
 document.addEventListener('DOMContentLoaded', () => {
     setupQuickReplies();
     loadContacts();
+
+    // ── Attach input listeners AFTER DOM is ready ──
+    const msgInput = document.getElementById('msgInput');
+    if (msgInput) {
+        msgInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+            const menu = document.getElementById('quickReplyMenu');
+            if (this.value === '/') {
+                if (menu) menu.classList.remove('hidden');
+            } else if (!this.value.includes('/')) {
+                if (menu) menu.classList.add('hidden');
+            }
+        });
+
+        msgInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        });
+    }
 });
 </script>
 
