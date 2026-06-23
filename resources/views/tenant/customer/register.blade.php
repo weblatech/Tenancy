@@ -26,7 +26,7 @@
 <body class="bg-slate-50 min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
 
     <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <a href="/" class="text-3xl font-black text-slate-800 tracking-tight flex items-center justify-center gap-1.5">
+        <a href="{{ tenant_store_url('/') }}" class="text-3xl font-black text-slate-800 tracking-tight flex items-center justify-center gap-1.5">
             🛍️ {{ strtoupper($tenantId) }}
         </a>
         <h2 class="mt-6 text-2xl font-black text-slate-800 leading-tight">
@@ -140,7 +140,7 @@
             </form>
 
             <div class="mt-6 pt-6 border-t border-slate-100 text-center">
-                <a href="/" class="text-xs font-bold text-slate-400 hover:text-slate-600 transition flex items-center justify-center gap-1">
+                <a href="{{ tenant_store_url('/') }}" class="text-xs font-bold text-slate-400 hover:text-slate-600 transition flex items-center justify-center gap-1">
                     ← {{ $settings->enable_rtl ? 'سٹور پر واپس جائیں' : 'Back to Store' }}
                 </a>
             </div>

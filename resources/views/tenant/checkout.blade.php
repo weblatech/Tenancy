@@ -57,7 +57,7 @@
     <!-- Header / Branding -->
     <header class="bg-white border-b border-gray-100 py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <a href="/">
+            <a href="{{ tenant_store_url('/') }}">
                 @if($settings && $settings->header_logo)
                     <img class="w-auto object-contain store-logo-img" src="{{ tenant_asset($settings->header_logo) }}" alt="Store Logo">
                 @else

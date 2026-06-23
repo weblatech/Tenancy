@@ -152,7 +152,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-4">
                 <div class="flex-shrink-0 flex items-center">
-                    <a href="/">
+                    <a href="{{ tenant_store_url('/') }}">
                         @if($settings && $settings->header_logo)
                             <img class="w-auto object-contain store-logo-img" src="{{ tenant_asset($settings->header_logo) }}" alt="Store Logo">
                         @else
@@ -175,7 +175,7 @@
                             <a href="{{ $menuItem['url'] }}" class="header-menu-link text-base font-bold {{ $isActive ? 'active' : '' }}">{{ $menuItem['label'] }}</a>
                         @endforeach
                     @else
-                        <a href="/" class="header-menu-link text-base font-bold {{ request()->is('/') ? 'active' : '' }}">Home</a>
+                        <a href="{{ tenant_store_url('/') }}" class="header-menu-link text-base font-bold {{ request()->is('/') ? 'active' : '' }}">Home</a>
                         <a href="/collection" class="header-menu-link text-base font-bold {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
                     @endif
                 </nav>
@@ -217,7 +217,7 @@
                     <a href="{{ $menuItem['url'] }}" class="header-menu-link block font-bold py-2 {{ $isActive ? 'active' : '' }}">{{ $menuItem['label'] }}</a>
                 @endforeach
             @else
-                <a href="/" class="header-menu-link block font-bold py-2 {{ request()->is('/') ? 'active' : '' }}">Home</a>
+                <a href="{{ tenant_store_url('/') }}" class="header-menu-link block font-bold py-2 {{ request()->is('/') ? 'active' : '' }}">Home</a>
                 <a href="/collection" class="header-menu-link block font-bold py-2 {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
             @endif
 
@@ -261,7 +261,7 @@
                             <li><a href="{{ $link['url'] }}" class="hover:opacity-100 hover:underline transition">{{ $link['label'] }}</a></li>
                         @endforeach
                     @else
-                        <li><a href="/" class="hover:opacity-100 hover:underline transition">Home</a></li>
+                        <li><a href="{{ tenant_store_url('/') }}" class="hover:opacity-100 hover:underline transition">Home</a></li>
                         <li><a href="/#products" class="hover:opacity-100 hover:underline transition">Shop</a></li>
                     @endif
                 </ul>

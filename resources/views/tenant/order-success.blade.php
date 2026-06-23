@@ -58,14 +58,14 @@
     <!-- Header / Branding -->
     <header class="bg-white border-b border-gray-100 py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <a href="/">
+            <a href="{{ tenant_store_url('/') }}">
                 @if($settings && $settings->header_logo)
                     <img class="w-auto object-contain store-logo-img" src="{{ tenant_asset($settings->header_logo) }}" alt="Store Logo">
                 @else
                     <span class="text-2xl font-black text-gray-900 tracking-tight">🛍️ {{ strtoupper($tenantId) }}</span>
                 @endif
             </a>
-            <a href="/" class="text-sm font-bold text-green-600 hover:underline flex items-center gap-1">
+            <a href="{{ tenant_store_url('/') }}" class="text-sm font-bold text-green-600 hover:underline flex items-center gap-1">
                 {{ $settings->enable_rtl ? 'ہوم پیج پر جائیں' : 'Go to Homepage' }}
             </a>
         </div>
@@ -477,7 +477,7 @@
                 <a href="/collection" class="btn-primary-custom text-white font-black py-4 px-8 rounded-xl text-sm transition shadow-md">
                     {{ $settings->enable_rtl ? 'شاپنگ جاری رکھیں' : 'Continue Shopping' }}
                 </a>
-                <a href="/" class="btn-secondary-custom font-bold py-4 px-8 rounded-xl text-sm transition">
+                <a href="{{ tenant_store_url('/') }}" class="btn-secondary-custom font-bold py-4 px-8 rounded-xl text-sm transition">
                     {{ $settings->enable_rtl ? 'ہوم پیج پر واپس جائیں' : 'Back to Home' }}
                 </a>
             </div>

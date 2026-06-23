@@ -34,7 +34,7 @@
     <!-- Header / Nav -->
     <header class="bg-white border-b border-slate-100 py-5 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <a href="/" class="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-1.5">
+            <a href="{{ tenant_store_url('/') }}" class="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-1.5">
                 🛍️ {{ strtoupper($tenantId) }}
             </a>
             
