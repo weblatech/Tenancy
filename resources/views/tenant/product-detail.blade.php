@@ -166,15 +166,14 @@
                     @if(is_array($settings->header_menu))
                         @foreach($settings->header_menu as $menuItem)
                             @php
-                                $url = $menuItem['url'] ?? '';
-                                $isActive = false;
-                                if ($url === '/' || $url === '') {
-                                    $isActive = request()->is('/');
-                                } else {
-                                    $isActive = request()->is(trim($url, '/')) || request()->is(trim($url, '/') . '/*') || request()->fullUrl() == url($url);
+                                $rawUrl = $menuItem['url'] ?? '/';
+                                $url = $rawUrl;
+                                if (str_starts_with($rawUrl, '/')) {
+                                    $url = tenant_store_url($rawUrl);
                                 }
+                                $isActive = request()->is(trim($rawUrl, '/')) || request()->is(trim($rawUrl, '/') . '/*');
                             @endphp
-                            <a href="{{ $menuItem['url'] }}" class="header-menu-link text-base font-bold {{ $isActive ? 'active' : '' }}">{{ $menuItem['label'] }}</a>
+                            <a href="{{ $url }}" class="header-menu-link text-base font-bold {{ $isActive ? 'active' : '' }}">{{ $menuItem['label'] }}</a>
                         @endforeach
                     @else
                         <a href="{{ tenant_store_url('/') }}" class="header-menu-link text-base font-bold {{ request()->is('/') ? 'active' : '' }}">Home</a>
@@ -208,15 +207,14 @@
             @if(is_array($settings->header_menu))
                 @foreach($settings->header_menu as $menuItem)
                     @php
-                        $url = $menuItem['url'] ?? '';
-                        $isActive = false;
-                        if ($url === '/' || $url === '') {
-                            $isActive = request()->is('/');
-                        } else {
-                            $isActive = request()->is(trim($url, '/')) || request()->is(trim($url, '/') . '/*') || request()->fullUrl() == url($url);
+                        $rawUrl = $menuItem['url'] ?? '/';
+                        $url = $rawUrl;
+                        if (str_starts_with($rawUrl, '/')) {
+                            $url = tenant_store_url($rawUrl);
                         }
+                        $isActive = request()->is(trim($rawUrl, '/')) || request()->is(trim($rawUrl, '/') . '/*');
                     @endphp
-                    <a href="{{ $menuItem['url'] }}" class="header-menu-link block font-bold py-2 {{ $isActive ? 'active' : '' }}">{{ $menuItem['label'] }}</a>
+                    <a href="{{ $url }}" class="header-menu-link block font-bold py-2 {{ $isActive ? 'active' : '' }}">{{ $menuItem['label'] }}</a>
                 @endforeach
             @else
                 <a href="{{ tenant_store_url('/') }}" class="header-menu-link block font-bold py-2 {{ request()->is('/') ? 'active' : '' }}">Home</a>
