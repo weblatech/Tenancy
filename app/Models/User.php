@@ -13,7 +13,7 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    protected $connection = config('tenancy.database.central_connection', 'pgsql');
+    protected $connection = 'pgsql';
 
     /**
      * The attributes that are mass assignable.
