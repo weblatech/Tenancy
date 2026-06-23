@@ -2101,6 +2101,63 @@ Route::middleware([
 // Uses WhatsAppWebhookController for clean separation of concerns
 // ============================================================
 
+// Test endpoint — verify webhook is reachable from browser
+Route::get('/webhook/whatsapp/{tenantId}/test', function ($tenantId) {
+    return response()->json([
+        'status' => 'ok',
+        'message' => 'WhatsApp webhook endpoint is reachable',
+        'store_id' => $tenantId,
+        'timestamp' => now()->toIso8601String(),
+        'instructions' => [
+            '1' => 'Your webhook URL for Meta Dashboard: /webhook/whatsapp/' . $tenantId,
+            '2' => 'Verify Token must match what you set in Meta Dashboard',
+            '3' => 'In Meta Dashboard > WhatsApp > Configuration > Webhook, subscribe to: messages, message_deliveries, message_reads',
+        ],
+    ]);
+});
+
+// Manual test — simulate an incoming webhook (for debugging)
+Route::post('/webhook/whatsapp/{tenantId}/simulate', function ($tenantId, Request $request) {
+    $phone = $request->input('phone', '923288847190');
+    $text = $request->input('text', 'Test message from simulate endpoint');
+
+    $testPayload = [
+        'entry' => [[
+            'changes' => [[
+                'value' => [
+                    'metadata' => [
+                        'phone_number_id' => '1172546945946113',
+                        'display_phone_number' => '1 555 666 8278',
+                    ],
+                    'messages' => [[
+                        'from' => $phone,
+                        'id' => 'wamid.test.' . time(),
+                        'timestamp' => (string) time(),
+                        'type' => 'text',
+                        'text' => ['body' => $text],
+                    ]],
+                ],
+            ]],
+        ]],
+    ];
+
+    // Call the webhook controller directly
+    $controller = new \App\Http\Controllers\WhatsAppWebhookController();
+    $requestObj = \Illuminate\Http\Request::create(
+        "/webhook/whatsapp/{$tenantId}",
+        'POST',
+        $testPayload
+    );
+
+    $response = $controller->handle($requestObj, $tenantId);
+    return response()->json([
+        'status' => 'simulated',
+        'store_id' => $tenantId,
+        'phone' => $phone,
+        'text' => $text,
+    ]);
+});
+
 Route::get('/webhook/whatsapp/{tenantId}', [\App\Http\Controllers\WhatsAppWebhookController::class, 'verify']);
 Route::post('/webhook/whatsapp/{tenantId}', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handle']);
 Route::post('/webhook/whatsapp/{tenantId}/incoming', [\App\Http\Controllers\WhatsAppWebhookController::class, 'incoming']);
