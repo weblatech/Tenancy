@@ -60,7 +60,7 @@
         <div class="p-4 bg-white border-t border-gray-100 space-y-3 shrink-0">
             <!-- Row 1: COD + Phone -->
             <div class="flex gap-3">
-                <a href="/checkout" style="background-color: {{ $settings->btn_buy_now_bg ?? '#84cc16' }}; color: {{ $settings->btn_buy_now_text_color ?? '#ffffff' }};" class="flex-grow text-center font-black py-4 rounded-xl text-sm shadow-lg hover:opacity-90 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                <a href="{{ tenant_store_url('/checkout') }}" style="background-color: {{ $settings->btn_buy_now_bg ?? '#84cc16' }}; color: {{ $settings->btn_buy_now_text_color ?? '#ffffff' }};" class="flex-grow text-center font-black py-4 rounded-xl text-sm shadow-lg hover:opacity-90 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                     <span>{{ $settings->btn_buy_now_text ?? 'Order Now - Cash on Delivery' }}</span>
                 </a>
@@ -73,7 +73,7 @@
             
             <!-- Row 2: Checkout + WhatsApp -->
             <div class="flex gap-3">
-                <a href="/checkout" style="background-color: {{ $settings->btn_add_to_cart_bg ?? '#16a34a' }}; color: {{ $settings->btn_add_to_cart_text_color ?? '#ffffff' }};" class="flex-grow text-center font-black py-4 rounded-xl text-sm shadow-lg hover:opacity-90 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                <a href="{{ tenant_store_url('/checkout') }}" style="background-color: {{ $settings->btn_add_to_cart_bg ?? '#16a34a' }}; color: {{ $settings->btn_add_to_cart_text_color ?? '#ffffff' }};" class="flex-grow text-center font-black py-4 rounded-xl text-sm shadow-lg hover:opacity-90 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
                     <span>Check out</span>
                 </a>
                 @if(!empty($settings->footer_phone) || !empty($settings->footer_whatsapp))
@@ -180,7 +180,7 @@
         updateCartBadge();
 
         if (forceRedirect) {
-            window.location.href = '/checkout';
+            window.location.href = '{{ tenant_store_url('/checkout') }}';
         } else {
             openCartDrawer();
         }
@@ -233,7 +233,7 @@
                 <div class="text-center py-16 text-gray-400 font-bold space-y-3 select-none">
                     <span class="text-6xl block">🛒</span>
                     <p class="text-sm">${emptyText}</p>
-                    <a href="/collection" class="inline-block bg-green-50 text-green-700 border border-green-200 text-xs px-4 py-2.5 rounded-xl hover:bg-green-100 transition font-black font-sans">${viewProductsText}</a>
+                    <a href="{{ tenant_store_url('/collection') }}" class="inline-block bg-green-50 text-green-700 border border-green-200 text-xs px-4 py-2.5 rounded-xl hover:bg-green-100 transition font-black font-sans">${viewProductsText}</a>
                 </div>
             `;
             subtotalEl.innerText = 'Rs. 0.00';

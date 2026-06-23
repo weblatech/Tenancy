@@ -2,7 +2,6 @@
 <html lang="en" class="h-screen overflow-hidden bg-slate-50">
 <head>
     <meta charset="UTF-8">
-    <base href="{{ tenant_store_url('/') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Store Customizer - {{ strtoupper($tenantId) }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -1453,7 +1452,7 @@
                                     <p class="text-[10px] text-slate-500 leading-relaxed font-medium">
                                         The <strong class="text-green-700">/collection</strong> page shows all your products with sorting & filtering. It is automatically linked from your storefront navigation and "View All" buttons.
                                     </p>
-                                    <a href="/collection" target="_blank" class="inline-flex items-center gap-1.5 text-[10px] font-extrabold text-white bg-green-600 hover:bg-green-700 px-3 py-2 rounded-xl transition">
+                                    <a href="{{ tenant_store_url('/collection') }}" target="_blank" class="inline-flex items-center gap-1.5 text-[10px] font-extrabold text-white bg-green-600 hover:bg-green-700 px-3 py-2 rounded-xl transition">
                                         Preview Shop Page →
                                     </a>
                                 </div>

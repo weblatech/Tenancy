@@ -37,7 +37,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="{{ tenant_store_url('/') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer: {{ $customer->name }} — Details</title>
     <script src="https://cdn.tailwindcss.com"></script>

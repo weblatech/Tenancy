@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="{{ tenant_store_url('/') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Products Collection - {{ strtoupper($tenantId) }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -176,7 +175,7 @@
                         @endforeach
                     @else
                         <a href="{{ tenant_store_url('/') }}" class="header-menu-link text-base font-bold {{ request()->is('/') ? 'active' : '' }}">Home</a>
-                        <a href="/collection" class="header-menu-link text-base font-bold {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
+                        <a href="{{ tenant_store_url('/collection') }}" class="header-menu-link text-base font-bold {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
                     @endif
                 </nav>
                 <div class="flex items-center space-x-4">
@@ -218,7 +217,7 @@
                 @endforeach
             @else
                 <a href="{{ tenant_store_url('/') }}" class="header-menu-link block font-bold py-2 {{ request()->is('/') ? 'active' : '' }}">Home</a>
-                <a href="/collection" class="header-menu-link block font-bold py-2 {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
+                <a href="{{ tenant_store_url('/collection') }}" class="header-menu-link block font-bold py-2 {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
             @endif
 
             <!-- Mobile Account Link -->
@@ -265,7 +264,7 @@
         <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-8 flex flex-col md:flex-row gap-6 justify-between items-center">
             
             <!-- Filter Form -->
-            <form action="/collection" method="GET" id="filterForm" class="w-full flex flex-wrap gap-4 items-center justify-start">
+            <form action="{{ tenant_store_url('/collection') }}" method="GET" id="filterForm" class="w-full flex flex-wrap gap-4 items-center justify-start">
                 
                 <!-- Availability Filter -->
                 <div class="flex items-center gap-2">
@@ -286,7 +285,7 @@
                 <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
 
                 @if(request()->filled('availability') || request()->filled('price_max'))
-                    <a href="/collection" class="text-xs font-bold text-red-500 hover:underline flex items-center gap-1">
+                    <a href="{{ tenant_store_url('/collection') }}" class="text-xs font-bold text-red-500 hover:underline flex items-center gap-1">
                         ✕ {{ $settings->enable_rtl ? 'صاف کریں' : 'Clear Filters' }}
                     </a>
                 @endif
@@ -295,7 +294,7 @@
             <!-- Sort Form (Submits to collection) -->
             <div class="flex items-center gap-2 w-full md:w-auto shrink-0 justify-end">
                 <label class="text-xs font-bold text-gray-500 uppercase tracking-wider shrink-0">{{ $settings->enable_rtl ? 'ترتیب دیں' : 'Sort By' }}:</label>
-                <select onchange="window.location.href='/collection?' + new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(window.location.search)), sort_by: this.value }).toString()" class="px-3 py-2 border border-gray-200 rounded-xl bg-gray-50 text-xs font-bold outline-none focus:border-green-600 transition">
+                <select onchange="window.location.href='{{ tenant_store_url('/collection') }}?' + new URLSearchParams({ ...Object.fromEntries(new URLSearchParams(window.location.search)), sort_by: this.value }).toString()" class="px-3 py-2 border border-gray-200 rounded-xl bg-gray-50 text-xs font-bold outline-none focus:border-green-600 transition">
                     <option value="latest" {{ request('sort_by') == 'latest' ? 'selected' : '' }}>{{ $settings->enable_rtl ? 'تازہ ترین اشیاء' : 'Latest' }}</option>
                     <option value="alpha_asc" {{ request('sort_by') == 'alpha_asc' ? 'selected' : '' }}>{{ $settings->enable_rtl ? 'حروفِ تہجی (A-Z)' : 'Alphabetically, A-Z' }}</option>
                     <option value="alpha_desc" {{ request('sort_by') == 'alpha_desc' ? 'selected' : '' }}>{{ $settings->enable_rtl ? 'حروفِ تہجی (Z-A)' : 'Alphabetically, Z-A' }}</option>
@@ -310,7 +309,7 @@
             <div class="py-20 text-center text-gray-400 font-bold border-2 border-dashed border-gray-200 rounded-3xl bg-gray-50">
                 <span class="text-5xl block mb-4">🔍</span>
                 <p class="text-lg">{{ $settings->enable_rtl ? 'اس فلٹر کے مطابق کوئی پروڈکٹ نہیں ملی۔' : 'No products match your filters.' }}</p>
-                <a href="/collection" class="mt-4 inline-block btn-primary-custom font-bold px-6 py-2.5 rounded-xl text-xs transition">{{ $settings->enable_rtl ? 'فلٹر صاف کریں' : 'Reset Shop' }}</a>
+                <a href="{{ tenant_store_url('/collection') }}" class="mt-4 inline-block btn-primary-custom font-bold px-6 py-2.5 rounded-xl text-xs transition">{{ $settings->enable_rtl ? 'فلٹر صاف کریں' : 'Reset Shop' }}</a>
             </div>
         @else
 
@@ -348,7 +347,7 @@
                                         $pct = round((($displayCompare - $displayPrice) / $displayCompare) * 100);
                                     }
                                 @endphp
-                                <a href="/product/{{ $product->id }}" class="block bg-white rounded-[2rem] shadow-sm border border-gray-150 p-4 hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between h-full">
+                                <a href="{{ tenant_store_url('/product/' . $product->id) }}" class="block bg-white rounded-[2rem] shadow-sm border border-gray-150 p-4 hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between h-full">
                                     <div>
                                         <!-- Image Container -->
                                         <div class="w-full aspect-square overflow-hidden rounded-[1.5rem] relative bg-gray-50">
@@ -412,7 +411,7 @@
                                     $displayCompare = $product->price;
                                     $pct = round((($displayCompare - $displayPrice) / $displayCompare) * 100);
                                 @endphp
-                                <a href="/product/{{ $product->id }}" class="block bg-white rounded-[2rem] shadow-sm border border-gray-150 p-4 hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between h-full">
+                                <a href="{{ tenant_store_url('/product/' . $product->id) }}" class="block bg-white rounded-[2rem] shadow-sm border border-gray-150 p-4 hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between h-full">
                                     <div>
                                         <!-- Image Container -->
                                         <div class="w-full aspect-square overflow-hidden rounded-[1.5rem] relative bg-gray-50">
@@ -473,7 +472,7 @@
                                         $pct = round((($displayCompare - $displayPrice) / $displayCompare) * 100);
                                     }
                                 @endphp
-                                <a href="/product/{{ $product->id }}" class="block bg-white rounded-[2rem] shadow-sm border border-gray-150 p-4 hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between h-full">
+                                <a href="{{ tenant_store_url('/product/' . $product->id) }}" class="block bg-white rounded-[2rem] shadow-sm border border-gray-150 p-4 hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between h-full">
                                     <div>
                                         <!-- Image Container -->
                                         <div class="w-full aspect-square overflow-hidden rounded-[1.5rem] relative bg-gray-50">
@@ -535,7 +534,7 @@
                         @endforeach
                     @else
                         <li><a href="{{ tenant_store_url('/') }}" class="hover:opacity-100 hover:underline transition">Home</a></li>
-                        <li><a href="/collection" class="hover:opacity-100 hover:underline transition">Shop</a></li>
+                        <li><a href="{{ tenant_store_url('/collection') }}" class="hover:opacity-100 hover:underline transition">Shop</a></li>
                     @endif
                 </ul>
             </div>

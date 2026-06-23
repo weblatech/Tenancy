@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="{{ tenant_store_url('/') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $settings->enable_rtl ? 'آرڈر کامیابی سے موصول ہو گیا' : 'Order Placed Successfully' }} - {{ strtoupper($tenantId) }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -475,7 +474,7 @@
 
             <!-- CTAs -->
             <div class="pt-6 flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/collection" class="btn-primary-custom text-white font-black py-4 px-8 rounded-xl text-sm transition shadow-md">
+                <a href="{{ tenant_store_url('/collection') }}" class="btn-primary-custom text-white font-black py-4 px-8 rounded-xl text-sm transition shadow-md">
                     {{ $settings->enable_rtl ? 'شاپنگ جاری رکھیں' : 'Continue Shopping' }}
                 </a>
                 <a href="{{ tenant_store_url('/') }}" class="btn-secondary-custom font-bold py-4 px-8 rounded-xl text-sm transition">

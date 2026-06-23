@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="{{ tenant_store_url('/') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $settings->enable_rtl ? 'میرا ڈیش بورڈ' : 'My Dashboard' }} - {{ strtoupper($tenantId) }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,7 +39,7 @@
             </a>
             
             <div class="flex items-center gap-4">
-                <a href="/collection" class="text-xs font-bold text-indigo-600 hover:underline">
+                <a href="{{ tenant_store_url('/collection') }}" class="text-xs font-bold text-indigo-600 hover:underline">
                     {{ $settings->enable_rtl ? 'خریداری جاری رکھیں' : 'Continue Shopping' }}
                 </a>
                 <form action="/customer/logout" method="POST" class="inline">
@@ -112,7 +111,7 @@
                         <div class="text-4xl">📦</div>
                         <h4 class="text-sm font-black text-slate-600">{{ $settings->enable_rtl ? 'آپ کا کوئی آرڈر ریکارڈ نہیں ہے' : 'You have not placed any orders yet.' }}</h4>
                         <p class="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">{{ $settings->enable_rtl ? 'ہمارے پاس بہترین پروڈکٹس دستیاب ہیں، ابھی خریداری شروع کریں۔' : 'Browse our collection and order outstanding health and wellness products today!' }}</p>
-                        <a href="/collection" class="btn-primary-custom inline-flex items-center gap-1.5 text-xs font-black px-5 py-3 rounded-xl transition shadow-md">
+                        <a href="{{ tenant_store_url('/collection') }}" class="btn-primary-custom inline-flex items-center gap-1.5 text-xs font-black px-5 py-3 rounded-xl transition shadow-md">
                             {{ $settings->enable_rtl ? 'خریداری کریں' : 'Start Shopping' }}
                         </a>
                     </div>

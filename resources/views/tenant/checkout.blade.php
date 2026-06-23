@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="{{ tenant_store_url('/') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $settings->enable_rtl ? 'چیک آؤٹ' : 'Checkout' }} - {{ strtoupper($tenantId) }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -65,7 +64,7 @@
                     <span class="text-2xl font-black text-gray-900 tracking-tight">🛍️ {{ strtoupper($tenantId) }}</span>
                 @endif
             </a>
-            <a href="/collection" class="text-sm font-bold text-green-600 hover:underline flex items-center gap-1">
+            <a href="{{ tenant_store_url('/collection') }}" class="text-sm font-bold text-green-600 hover:underline flex items-center gap-1">
                 {{ $settings->enable_rtl ? '← شاپ پر واپس جائیں' : '← Return to Shop' }}
             </a>
         </div>
@@ -89,7 +88,7 @@
                         {{ $settings->enable_rtl ? 'شپنگ اور ڈیلیوری کی معلومات' : 'Shipping & Delivery Information' }}
                     </h2>
 
-                    <form action="/checkout" method="POST" id="checkoutForm" class="space-y-6">
+                    <form action="{{ tenant_store_url('/checkout') }}" method="POST" id="checkoutForm" class="space-y-6">
                         @csrf
                         
                         <!-- Hidden cart payload & Geolocation tracking -->
@@ -604,7 +603,7 @@
                     <div class="text-center py-10 text-gray-400 font-bold space-y-3">
                         <span class="text-4xl block">🛒</span>
                         <p class="text-sm">{{ $settings->enable_rtl ? 'آپ کا کارٹ خالی ہے!' : 'Your cart is empty!' }}</p>
-                        <a href="/collection" class="inline-block bg-green-50 text-green-700 border border-green-250 text-xs px-4 py-2 rounded-xl font-extrabold hover:bg-green-100 transition">{{ $settings->enable_rtl ? 'شاپنگ کریں' : 'Return to Shop' }}</a>
+                        <a href="{{ tenant_store_url('/collection') }}" class="inline-block bg-green-50 text-green-700 border border-green-250 text-xs px-4 py-2 rounded-xl font-extrabold hover:bg-green-100 transition">{{ $settings->enable_rtl ? 'شاپنگ کریں' : 'Return to Shop' }}</a>
                     </div>
                 `;
                 if(submitBtn) {

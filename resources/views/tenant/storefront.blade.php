@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="{{ tenant_store_url('/') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ tenant('name') ?? strtoupper($tenantId) }} - Official Store</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -243,7 +242,7 @@
                         @endforeach
                     @else
                         <a href="{{ tenant_store_url('/') }}" class="header-menu-link text-base font-bold {{ request()->is('/') ? 'active' : '' }}">Home</a>
-                        <a href="/collection" class="header-menu-link text-base font-bold {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
+                        <a href="{{ tenant_store_url('/collection') }}" class="header-menu-link text-base font-bold {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
                     @endif
                 </nav>
                 <div class="flex items-center space-x-4">
@@ -285,7 +284,7 @@
                 @endforeach
             @else
                 <a href="{{ tenant_store_url('/') }}" class="header-menu-link block font-bold py-2 {{ request()->is('/') ? 'active' : '' }}">Home</a>
-                <a href="/collection" class="header-menu-link block font-bold py-2 {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
+                <a href="{{ tenant_store_url('/collection') }}" class="header-menu-link block font-bold py-2 {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
             @endif
 
             <!-- Mobile Account Link -->
@@ -612,7 +611,7 @@
                                 $pct = round((($displayCompare - $displayPrice) / $displayCompare) * 100);
                             }
                         @endphp
-                        <a href="/product/{{ $product->id }}" class="block bg-white rounded-[2rem] shadow-sm border border-gray-150 p-4 hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between h-full">
+                        <a href="{{ tenant_store_url('/product/' . $product->id) }}" class="block bg-white rounded-[2rem] shadow-sm border border-gray-150 p-4 hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between h-full">
                             <div>
                                 <!-- Image Container -->
                                 <div class="w-full aspect-square overflow-hidden rounded-[1.5rem] relative bg-gray-50">
@@ -728,7 +727,7 @@
                         $pct = round((($displayCompare - $displayPrice) / $displayCompare) * 100);
                     }
                 @endphp
-                <a href="/product/{{ $product->id }}" class="block bg-white rounded-[2rem] shadow-sm border border-gray-150 p-4 hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between h-full">
+                <a href="{{ tenant_store_url('/product/' . $product->id) }}" class="block bg-white rounded-[2rem] shadow-sm border border-gray-150 p-4 hover:shadow-2xl transition-all duration-300 group flex flex-col justify-between h-full">
                     <div>
                         <!-- Image Container -->
                         <div class="w-full aspect-square overflow-hidden rounded-[1.5rem] relative bg-gray-50">
@@ -773,7 +772,7 @@
 
         <!-- View All Products Button -->
         <div class="mt-16 text-center">
-            <a href="/collection" class="btn-secondary-custom inline-flex items-center gap-3 font-black py-5 px-12 rounded-2xl transition-all shadow-xl hover:-translate-y-0.5 text-base">
+            <a href="{{ tenant_store_url('/collection') }}" class="btn-secondary-custom inline-flex items-center gap-3 font-black py-5 px-12 rounded-2xl transition-all shadow-xl hover:-translate-y-0.5 text-base">
                 {{ $settings->enable_rtl ? 'ساری پروڈکٹس دیکھیں' : 'View All Products' }}
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
             </a>
@@ -812,7 +811,7 @@
                             <div class="flex flex-col items-center gap-2">
                                 <span class="font-black text-gray-900 text-base text-center">{{ $rev->customer_name }}</span>
                                 @if($rev->product)
-                                    <a href="/product/{{ $rev->product->id }}" class="text-[10px] font-black text-[#16a34a] hover:underline uppercase tracking-wider text-center">
+                                    <a href="{{ tenant_store_url('/product/' . $rev->product->id) }}" class="text-[10px] font-black text-[#16a34a] hover:underline uppercase tracking-wider text-center">
                                         {{ $settings->enable_rtl ? 'بابت: ' : 'Product: ' }}{{ $rev->product->name }}
                                     </a>
                                 @endif
@@ -846,7 +845,7 @@
                         @endforeach
                     @else
                         <li><a href="{{ tenant_store_url('/') }}" class="hover:opacity-100 hover:underline transition">Home</a></li>
-                        <li><a href="/collection" class="hover:opacity-100 hover:underline transition">Shop</a></li>
+                        <li><a href="{{ tenant_store_url('/collection') }}" class="hover:opacity-100 hover:underline transition">Shop</a></li>
                     @endif
                 </ul>
             </div>

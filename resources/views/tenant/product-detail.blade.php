@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="{{ tenant_store_url('/') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $product->name }} - {{ strtoupper($tenantId) }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -179,7 +178,7 @@
                         @endforeach
                     @else
                         <a href="{{ tenant_store_url('/') }}" class="header-menu-link text-base font-bold {{ request()->is('/') ? 'active' : '' }}">Home</a>
-                        <a href="/collection" class="header-menu-link text-base font-bold {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
+                        <a href="{{ tenant_store_url('/collection') }}" class="header-menu-link text-base font-bold {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
                     @endif
                 </nav>
                 <div class="flex items-center space-x-4">
@@ -221,7 +220,7 @@
                 @endforeach
             @else
                 <a href="{{ tenant_store_url('/') }}" class="header-menu-link block font-bold py-2 {{ request()->is('/') ? 'active' : '' }}">Home</a>
-                <a href="/collection" class="header-menu-link block font-bold py-2 {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
+                <a href="{{ tenant_store_url('/collection') }}" class="header-menu-link block font-bold py-2 {{ request()->is('collection') ? 'active' : '' }}">Shop</a>
             @endif
 
             <!-- Mobile Account Link -->
@@ -600,7 +599,7 @@
             <!-- Add Review Form (Hidden initially) -->
             <div id="write-review-form" class="hidden bg-white border rounded-[2rem] p-8 shadow-sm border-gray-100 mt-4">
                 <h3 class="text-xl font-black mb-4 text-gray-800">{{ $settings->enable_rtl ? 'اپنا قیمتی ریویو لکھیں:' : 'Write your review:' }}</h3>
-                <form action="/product/{{ $product->id }}/review" method="POST" class="space-y-4">
+                <form action="{{ tenant_store_url('/product/' . $product->id . '/review') }}" method="POST" class="space-y-4">
                     @csrf
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -701,7 +700,7 @@
                         @endforeach
                     @else
                         <li><a href="{{ tenant_store_url('/') }}" class="hover:opacity-100 hover:underline transition">Home</a></li>
-                        <li><a href="/collection" class="hover:opacity-100 hover:underline transition">Shop</a></li>
+                        <li><a href="{{ tenant_store_url('/collection') }}" class="hover:opacity-100 hover:underline transition">Shop</a></li>
                     @endif
                 </ul>
             </div>
