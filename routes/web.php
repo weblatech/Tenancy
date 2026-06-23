@@ -94,13 +94,10 @@ Route::domain($domainToRegister)->group(function () {
 
         Route::get('/seed-phone-mappings', function () {
             try {
-                $tenants = \App\Models\Tenant::all();
+                $centralConn = config('tenancy.database.central_connection');
                 $mappings = 0;
 
-                $centralConn = config('tenancy.database.central_connection');
-                $tenantDb = config('tenancy.database.prefix') . 'purelife';
-
-                // Just directly insert the known mapping for purelife
+                // Insert mapping for purelife (Phone Number ID: 1172546945946113)
                 $exists = \DB::connection($centralConn)
                     ->table('whatsapp_phone_mappings')
                     ->where('phone_number_id', '1172546945946113')
@@ -119,69 +116,7 @@ Route::domain($domainToRegister)->group(function () {
                     $mappings++;
                 }
 
-                // Try to find any other tenants with phone numbers
-                foreach ($tenants as $tenant) {
-                    if ($tenant->id === 'purelife') continue;
-
-                    try {
-                        $tenantDbName = config('tenancy.database.prefix') . $tenant->id;
-                        $settings = \DB::connection($tenantDbName)
-                            ->table('store_settings')
-                            ->where('id', 1)
-                            ->first();
-
-                        if ($settings && !empty($settings->whatsapp_phone_number_id)) {
-                            $exists = \DB::connection($centralConn)
-                                ->table('whatsapp_phone_mappings')
-                                ->where('phone_number_id', $settings->whatsapp_phone_number_id)
-                                ->exists();
-
-                            if (!$exists) {
-                                \DB::connection($centralConn)
-                                    ->table('whatsapp_phone_mappings')->insert([
-                                        'phone_number_id' => $settings->whatsapp_phone_number_id,
-                                        'tenant_id' => $tenant->id,
-                                        'verify_token' => 'my_platform_verify_2026',
-                                        'is_active' => true,
-                                        'created_at' => now(),
-                                        'updated_at' => now(),
-                                    ]);
-                                $mappings++;
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        // Skip tenant
-                    }
-                }
-
-                // Also check munaa
-                try {
-                    $munaaDb = config('tenancy.database.prefix') . 'munaa';
-                    $munaaSettings = \DB::connection($munaaDb)
-                        ->table('store_settings')
-                        ->where('id', 1)
-                        ->first();
-                    if ($munaaSettings && !empty($munaaSettings->whatsapp_phone_number_id)) {
-                        $exists = \DB::connection($centralConn)
-                            ->table('whatsapp_phone_mappings')
-                            ->where('phone_number_id', $munaaSettings->whatsapp_phone_number_id)
-                            ->exists();
-                        if (!$exists) {
-                            \DB::connection($centralConn)
-                                ->table('whatsapp_phone_mappings')->insert([
-                                    'phone_number_id' => $munaaSettings->whatsapp_phone_number_id,
-                                    'tenant_id' => 'munaa',
-                                    'verify_token' => 'my_platform_verify_2026',
-                                    'is_active' => true,
-                                    'created_at' => now(),
-                                    'updated_at' => now(),
-                                ]);
-                            $mappings++;
-                        }
-                    }
-                } catch (\Exception $e) {}
-
-                return "Phone mappings seeded: {$mappings} new mappings created<br><br><a href='/admin/whatsapp-provider'>Go to WhatsApp Settings →</a>";
+                return "Phone mappings seeded: {$mappings} new mapping(s) created.<br><br><a href='/admin/whatsapp-provider'>Go to WhatsApp Settings →</a>";
             } catch (\Exception $e) {
                 return 'Error: ' . $e->getMessage();
             }
