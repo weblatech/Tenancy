@@ -427,17 +427,11 @@ Route::middleware([
         return redirect('/shop/social')->with('success', 'Social Media & Tracking settings updated successfully!');
     });
 
-    // WhatsApp Registration Flow
-    Route::get('/shop/whatsapp-register', function () {
-        $settings = App\Models\StoreSetting::firstOrCreate(['id' => 1]);
-        $registration = new \App\Services\WhatsAppRegistration();
-        return view('tenant.whatsapp-crm.register', [
-            'tenantId' => tenant('id'),
-            'storeName' => tenant('name') ?? '',
-            'isReady' => $registration->isReady(),
-            'phoneNumberId' => $settings->whatsapp_phone_number_id ?? '',
-        ]);
-    });
+    // WhatsApp Registration Flow — Embedded Signup
+    Route::get('/shop/whatsapp-register', [\App\Http\Controllers\WhatsAppEmbeddedSignupController::class, 'showPage']);
+
+    // WhatsApp Embedded Signup — FB SDK callback (token exchange + WABA discovery)
+    Route::post('/shop/whatsapp/connect', [\App\Http\Controllers\WhatsAppEmbeddedSignupController::class, 'connectStore']);
 
     // AJAX: List existing phone numbers from WABA
     Route::get('/shop/whatsapp-register/list-numbers', function () {
