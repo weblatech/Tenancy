@@ -41,4 +41,9 @@ return [
         'config_id' => env('META_EMBEDDED_SIGNUP_CONFIG_ID'),
     ],
 
+    'render' => [
+        'api_key' => env('RENDER_API_KEY'),
+        'service_id' => env('RENDER_SERVICE_ID'),
+    ],
+
 ];

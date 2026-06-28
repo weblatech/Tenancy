@@ -794,82 +794,12 @@ Route::middleware([
     });
 
     // Custom Domain Settings
-    Route::get('/shop/domains', function () {
-        $domains = tenant()->domains;
-        $platformIp = config('platform.ip', '');
-        $platformDomain = config('platform.domain', 'saas-ecommerce-xx7e.onrender.com');
-        $centralDomains = config('tenancy.central_domains', ['localhost', '127.0.0.1']);
-        $defaultSubdomain = tenant('id') . '.' . $platformDomain;
-        
-        // Determine the current store URL for the storefront link
-        $currentHost = request()->getHost();
-        $storeUrl = "https://{$currentHost}";
-        if (request()->getPort() && request()->getPort() != 80) {
-            $storeUrl .= ":" . request()->getPort();
-        }
-        
-        return view('tenant.domains.index', [
-            'tenantId' => tenant('id'),
-            'domains' => $domains,
-            'platformIp' => $platformIp,
-            'platformDomain' => $platformDomain,
-            'centralDomains' => $centralDomains,
-            'defaultSubdomain' => $defaultSubdomain,
-            'storeUrl' => $storeUrl,
-        ]);
-    });
-
-    Route::post('/shop/domains', function (Request $request) {
-        $request->validate([
-            'domain' => 'required|string|max:255',
-        ]);
-
-        $domain = trim($request->domain);
-        $domain = preg_replace('/^https?:\/\//i', '', $domain);
-        $domain = rtrim($domain, '/');
-        $domain = strtolower($domain);
-
-        if (empty($domain)) {
-            return redirect()->back()->with('error', 'Invalid domain format.');
-        }
-
-        // Check uniqueness
-        $exists = \Stancl\Tenancy\Database\Models\Domain::on(config('tenancy.database.central_connection'))->where('domain', $domain)->exists();
-        if ($exists) {
-            return redirect()->back()->with('error', 'This domain is already registered.');
-        }
-
-        // Check it's not a central/platform domain
-        $centralDomains = config('tenancy.central_domains', ['localhost', '127.0.0.1']);
-        if (in_array($domain, $centralDomains)) {
-            return redirect()->back()->with('error', 'Cannot bind a central platform domain.');
-        }
-
-        tenant()->domains()->create(['domain' => $domain]);
-
-        return redirect('/shop/domains')->with('success', 'Custom domain added successfully!');
-    });
-
-    Route::post('/shop/domains/{id}/delete', function ($id) {
-        $domain = tenant()->domains()->findOrFail($id);
-
-        $centralDomains = config('tenancy.central_domains', ['localhost', '127.0.0.1']);
-        $defaultSubdomain = tenant('id') . '.' . ($centralDomains[0] ?? 'localhost');
-        $totalDomains = tenant()->domains()->count();
-
-        // Must have at least one domain
-        if ($totalDomains <= 1) {
-            return redirect()->back()->with('error', 'Cannot delete! A store must have at least one active domain.');
-        }
-
-        // Cannot delete the default system subdomain
-        if ($domain->domain === $defaultSubdomain) {
-            return redirect()->back()->with('error', 'Cannot delete the default system subdomain.');
-        }
-
-        $domain->delete();
-        return redirect('/shop/domains')->with('success', 'Custom domain deleted successfully!');
-    });
+    Route::get('/shop/domains', [\App\Http\Controllers\Tenant\DomainController::class, 'index']);
+    Route::post('/shop/domains', [\App\Http\Controllers\Tenant\DomainController::class, 'store']);
+    Route::post('/shop/domains/{id}/delete', [\App\Http\Controllers\Tenant\DomainController::class, 'destroy']);
+    Route::post('/shop/domains/check-dns', [\App\Http\Controllers\Tenant\DomainController::class, 'checkDns']);
+    Route::get('/shop/domains/instructions', [\App\Http\Controllers\Tenant\DomainController::class, 'getInstructions']);
+    Route::post('/shop/domains/refresh', [\App\Http\Controllers\Tenant\DomainController::class, 'refreshDns']);
 
     // 💾 مین گلوبل سیٹنگز
     Route::post('/shop/settings', function (Request $request) {
