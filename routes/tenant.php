@@ -1300,18 +1300,46 @@ Route::middleware([
     // 📄 اسٹور فرنٹ پیج رینڈر کرنا
     Route::get('/page/{slug}', function ($slug) {
         $settings = StoreSetting::firstOrCreate(['id' => 1]);
+        
+        // Debug: check if tenancy is initialized
+        $tenantId = tenant('id');
+        
         $page = App\Models\Page::where('slug', $slug)->first();
         if (!$page) {
-            abort(404, 'Page not found.');
+            // Try to find by similar slug (helps debug)
+            $allPages = App\Models\Page::select('id', 'slug', 'is_active', 'title')->get();
+            $suggestion = '';
+            if ($allPages->count() > 0) {
+                $slugs = $allPages->pluck('slug')->implode(', ');
+                $suggestion = " Available pages: [{$slugs}]";
+            }
+            abort(404, "Page '{$slug}' not found in tenant '{$tenantId}'.{$suggestion}");
         }
         if (!$page->is_active) {
-            // Auto-activate pages that were created with is_active=0
             $page->update(['is_active' => true]);
         }
         return view('tenant.page', [
-            'tenantId' => tenant('id'),
+            'tenantId' => $tenantId,
             'settings' => $settings,
             'page' => $page
+        ]);
+    });
+
+    // Debug: List all pages in current tenant DB
+    Route::get('/debug/pages', function () {
+        $tenantId = tenant('id');
+        $pages = App\Models\Page::all()->map(fn($p) => [
+            'id' => $p->id,
+            'title' => $p->title,
+            'slug' => $p->slug,
+            'is_active' => $p->is_active,
+            'content_length' => strlen($p->content ?? ''),
+        ]);
+        return response()->json([
+            'tenant' => $tenantId,
+            'db_connection' => DB::connection()->getName(),
+            'pages_count' => $pages->count(),
+            'pages' => $pages,
         ]);
     });
 
