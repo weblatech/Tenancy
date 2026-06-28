@@ -11,12 +11,6 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
-            // DIRECT TEST: Route registered FIRST, no middleware, no groups
-            Route::get('/purelife/page/about-us', function () {
-                return response("DIRECT TEST WORKS - slug=" . request()->route('slug', 'N/A'), 200)
-                    ->header('Content-Type', 'text/plain');
-            });
-
             // Load tenant routes with {tenant} prefix
             Route::prefix('{tenant}')->middleware([
                 'web',

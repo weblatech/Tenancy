@@ -1320,52 +1320,66 @@ Route::middleware([
 
     // 📄 Storefront page renderer
     Route::get('/page/{slug}', function ($slug) {
-        \Illuminate\Support\Facades\Log::info("PAGE ROUTE HIT", ['slug' => $slug, 'url' => request()->fullUrl(), 'host' => request()->getHost()]);
-        $tenantId = tenant('id');
-        \Illuminate\Support\Facades\Log::info("PAGE ROUTE tenant ID", ['tenant_id' => $tenantId, 'tenancy_initialized' => tenancy()->initialized]);
+        try {
+            \Illuminate\Support\Facades\Log::info("PAGE ROUTE HIT", ['slug' => $slug, 'url' => request()->fullUrl()]);
+            $tenantId = tenant('id');
+            \Illuminate\Support\Facades\Log::info("PAGE ROUTE tenant", ['tenant_id' => $tenantId]);
 
-        // If tenant not initialized, try to initialize from user session
-        if (!$tenantId) {
-            if (\Illuminate\Support\Facades\Auth::check() && \Illuminate\Support\Facades\Auth::user()->tenant_id) {
-                $t = \App\Models\Tenant::find(\Illuminate\Support\Facades\Auth::user()->tenant_id);
-                if ($t) {
-                    try { tenancy()->initialize($t); } catch (\Exception $e) {}
-                    $tenantId = tenant('id');
+            if (!$tenantId) {
+                if (\Illuminate\Support\Facades\Auth::check() && \Illuminate\Support\Facades\Auth::user()->tenant_id) {
+                    $t = \App\Models\Tenant::find(\Illuminate\Support\Facades\Auth::user()->tenant_id);
+                    if ($t) {
+                        try { tenancy()->initialize($t); } catch (\Exception $e) {}
+                        $tenantId = tenant('id');
+                    }
+                }
+                if (!$tenantId) {
+                    abort(404, 'Store not found. Please visit via your store URL (e.g. /your-store-id/page/{slug})');
                 }
             }
-            if (!$tenantId) {
-                abort(404, 'Store not found. Please visit via your store URL (e.g. /your-store-id/page/{slug})');
-            }
-        }
 
-        // Ensure pages table exists
-        if (!\Illuminate\Support\Facades\Schema::hasTable('pages')) {
-            try {
-                \Artisan::call('tenants:migrate', ['--tenants' => [$tenantId]]);
-            } catch (\Exception $e) {}
             if (!\Illuminate\Support\Facades\Schema::hasTable('pages')) {
-                abort(404, 'Pages system not initialized for this store.');
+                try {
+                    \Artisan::call('tenants:migrate', ['--tenants' => [$tenantId]]);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("PAGE ROUTE migrate failed", ['error' => $e->getMessage()]);
+                }
+                if (!\Illuminate\Support\Facades\Schema::hasTable('pages')) {
+                    abort(404, 'Pages system not initialized for this store.');
+                }
             }
+
+            $settings = StoreSetting::firstOrCreate(['id' => 1]);
+            $page = \App\Models\Page::where('slug', $slug)->first();
+
+            if (!$page) {
+                $allSlugs = \App\Models\Page::pluck('slug')->implode(', ');
+                $hint = $allSlugs ? " Available: [{$allSlugs}]" : ' (no pages exist yet)';
+                abort(404, "Page '{$slug}' not found in store '{$tenantId}'.{$hint}");
+            }
+
+            if (!$page->is_active) {
+                $page->update(['is_active' => true]);
+            }
+
+            return view('tenant.page', [
+                'tenantId' => $tenantId,
+                'settings' => $settings,
+                'page' => $page
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("PAGE ROUTE EXCEPTION", [
+                'slug' => $slug,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            if (app()->hasDebugModeEnabled()) {
+                throw $e;
+            }
+            abort(500, 'Page load error: ' . $e->getMessage());
         }
-
-        $settings = StoreSetting::firstOrCreate(['id' => 1]);
-        $page = \App\Models\Page::where('slug', $slug)->first();
-
-        if (!$page) {
-            $allSlugs = \App\Models\Page::pluck('slug')->implode(', ');
-            $hint = $allSlugs ? " Available: [{$allSlugs}]" : ' (no pages exist yet — create one in Theme Customizer → Pages)';
-            abort(404, "Page '{$slug}' not found in store '{$tenantId}'.{$hint}");
-        }
-
-        if (!$page->is_active) {
-            $page->update(['is_active' => true]);
-        }
-
-        return view('tenant.page', [
-            'tenantId' => $tenantId,
-            'settings' => $settings,
-            'page' => $page
-        ]);
     });
 
     // Debug: List all pages + system info
