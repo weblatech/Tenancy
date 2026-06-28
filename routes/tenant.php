@@ -993,8 +993,8 @@ Route::middleware([
         }
     });
 
-    Route::get('/shop/settings/section/delete/{id}', function ($id) { 
-        StoreSection::findOrFail($id)->delete(); return redirect('/shop/settings')->with('success', 'Section deleted successfully! 🗑️'); 
+    Route::post('/shop/settings/section/delete/{id}', function ($id) { 
+        StoreSection::findOrFail($id)->delete(); return redirect('/shop/settings')->with('success', 'Section deleted successfully!'); 
     });
 
     // 📄 پیج بنانا اور ایڈٹ کرنا
@@ -1068,9 +1068,9 @@ Route::middleware([
     });
 
     // 🗑️ پیج ڈیلیٹ کرنا
-    Route::get('/shop/settings/page/delete/{id}', function ($id) {
+    Route::post('/shop/settings/page/delete/{id}', function ($id) {
         App\Models\Page::findOrFail($id)->delete();
-        return redirect('/shop/settings')->with('success', 'Page deleted successfully! 🗑️');
+        return redirect('/shop/settings')->with('success', 'Page deleted successfully!');
     });
 
     // 📋 1. ایڈمن میسجز انڈیکس پیج

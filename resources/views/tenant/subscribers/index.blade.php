@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ strtoupper($tenantId) }} - Newsletter Subscribers</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var path = window.location.pathname;
+        var parts = path.split('/').filter(Boolean);
+        var tenantPrefix = parts.length > 0 && parts[0] !== 'shop' ? '/' + parts[0] : '';
+        document.querySelectorAll('form[action^="/shop/"]').forEach(function(form) {
+            form.setAttribute('action', tenantPrefix + form.getAttribute('action'));
+        });
+    });
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">

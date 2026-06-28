@@ -10,6 +10,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    <script>
+        // Fix form actions: prefix all /shop/* paths with tenant prefix
+        document.addEventListener('DOMContentLoaded', function() {
+            var path = window.location.pathname;
+            var parts = path.split('/').filter(Boolean);
+            var tenantPrefix = parts.length > 0 && parts[0] !== 'shop' ? '/' + parts[0] : '';
+            document.querySelectorAll('form[action^="/shop/"]').forEach(function(form) {
+                form.setAttribute('action', tenantPrefix + form.getAttribute('action'));
+            });
+        });
+    </script>
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -826,9 +837,13 @@
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1">
-                                        <a href="/shop/settings/section/delete/{{ $sec->id }}" class="text-slate-300 hover:text-red-500 transition p-1.5 hover:bg-slate-50 rounded-lg" title="Delete Section" onclick="localStorage.removeItem('editingSectionId'); event.stopPropagation();">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        </a>
+                                        <form action="/shop/settings/section/delete/{{ $sec->id }}" method="POST" class="inline" onsubmit="localStorage.removeItem('editingSectionId'); event.stopPropagation();">
+                                            @csrf
+                                            <button type="submit" class="text-slate-300 hover:text-red-500 transition p-1.5 hover:bg-slate-50 rounded-lg" title="Delete Section">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </form>
+                                    </div>
                                     </div>
                                 </div>
                             @empty
@@ -1136,9 +1151,12 @@
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1">
-                                        <a href="/shop/settings/page/delete/{{ $page->id }}" class="text-slate-350 hover:text-red-500 transition p-1.5 hover:bg-slate-50 rounded-lg" title="Delete Page" onclick="event.stopPropagation(); return confirm('Are you sure you want to delete this page?');">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        </a>
+                                        <form action="/shop/settings/page/delete/{{ $page->id }}" method="POST" class="inline" onsubmit="event.stopPropagation(); return confirm('Are you sure you want to delete this page?');">
+                                            @csrf
+                                            <button type="submit" class="text-slate-350 hover:text-red-500 transition p-1.5 hover:bg-slate-50 rounded-lg" title="Delete Page">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             @empty
