@@ -11,11 +11,13 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
-            // Load tenant routes ONCE — with {tenant} prefix for storefront routes
-            // The InitializeTenantFlexible middleware inside tenant.php handles:
-            // 1. Route param {tenant} — e.g. /purelife/page/about-us
-            // 2. Domain-based tenancy — e.g. customdomain.com
-            // 3. User-based tenancy (fallback) — e.g. /shop/settings when logged in
+            // DIRECT TEST: Route registered FIRST, no middleware, no groups
+            Route::get('/purelife/page/about-us', function () {
+                return response("DIRECT TEST WORKS - slug=" . request()->route('slug', 'N/A'), 200)
+                    ->header('Content-Type', 'text/plain');
+            });
+
+            // Load tenant routes with {tenant} prefix
             Route::prefix('{tenant}')->middleware([
                 'web',
                 \App\Http\Middleware\InitializeTenantFlexible::class,
