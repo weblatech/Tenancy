@@ -94,5 +94,7 @@ echo "Starting server on port ${PORT:-8000}..."
 php artisan queue:work --sleep=3 --tries=3 --max-time=3600 &
 echo "Queue worker started in background"
 
-# Start the server
-php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+# Start PHP built-in server using server.php as router
+# This ensures ALL requests (including deep paths like /tenant/page/slug) 
+# are routed through public/index.php (Laravel front controller)
+php -S 0.0.0.0:${PORT:-8000} server.php
