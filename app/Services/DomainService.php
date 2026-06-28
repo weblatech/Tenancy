@@ -22,50 +22,37 @@ class DomainService
 
     /**
      * Check DNS status for a domain
-     * Returns: 'connected', 'resolving', 'mismatch', 'pending'
+     * Returns: 'connected', 'resolving', 'mismatch'
      */
     public function checkDnsStatus(string $domain): string
     {
-        $cacheKey = "dns_check_{$domain}";
-        $cached = cache()->get($cacheKey);
-        if ($cached !== null) {
-            return $cached;
-        }
-
         // Localhost always connected (dev only)
         if (str_ends_with($domain, 'localhost') || $domain === '127.0.0.1') {
-            cache()->put($cacheKey, 'connected', 300);
             return 'connected';
         }
 
         // Check if domain resolves
         $ip = gethostbyname($domain);
         if ($ip === $domain) {
-            // DNS not propagated yet
-            cache()->put($cacheKey, 'resolving', 60);
             return 'resolving';
         }
 
         // Check A record
         if (!empty($this->platformIp) && $ip === $this->platformIp) {
-            cache()->put($cacheKey, 'connected', 300);
             return 'connected';
         }
 
         // Check CNAME
         $cname = @dns_get_record($domain, DNS_CNAME);
         if (!empty($cname) && str_ends_with($cname[0]['target'], $this->platformDomain)) {
-            cache()->put($cacheKey, 'connected', 300);
             return 'connected';
         }
 
         // Check if it resolves to a valid IP (might be pointing elsewhere)
         if ($ip && $ip !== $domain) {
-            cache()->put($cacheKey, 'mismatch', 300);
             return 'mismatch';
         }
 
-        cache()->put($cacheKey, 'resolving', 60);
         return 'resolving';
     }
 
@@ -82,7 +69,7 @@ class DomainService
      */
     public function getDnsInstructions(string $domain): array
     {
-        $isRoot = !str_contains($domain, '.' . $this->platformDomain) 
+        $isRoot = !str_contains($domain, '.' . $this->platformDomain)
                   && substr_count($domain, '.') === 1;
 
         $instructions = [
@@ -93,7 +80,6 @@ class DomainService
             'render_steps' => [],
         ];
 
-        // Render dashboard steps (always required first)
         $instructions['render_steps'] = [
             'title' => 'Add Domain in Render Dashboard',
             'steps' => [
@@ -106,9 +92,7 @@ class DomainService
             'note' => 'Render automatically provisions an SSL certificate once DNS is configured correctly.',
         ];
 
-        // DNS records to add at registrar
         if ($isRoot) {
-            // Root domain (mybrand.com) - needs A record
             $instructions['records'][] = [
                 'type' => 'A',
                 'host' => '@',
@@ -126,7 +110,6 @@ class DomainService
                 'required' => true,
             ];
         } else {
-            // Subdomain (store.mybrand.com) - needs CNAME
             $instructions['records'][] = [
                 'type' => 'CNAME',
                 'host' => $domain,
@@ -194,7 +177,6 @@ class DomainService
         }
 
         try {
-            // First, find the domain ID
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$this->renderApiKey}",
                 'Accept' => 'application/json',
@@ -265,18 +247,15 @@ class DomainService
             return null;
         }
 
-        // Basic format validation
         if (!preg_match('/^[a-z0-9]([a-z0-9\-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9\-]*[a-z0-9])?)*\.[a-z]{2,}$/', $domain)) {
             return null;
         }
 
-        // Check it's not a central domain
         $centralDomains = config('tenancy.central_domains', []);
         if (in_array($domain, $centralDomains)) {
             return null;
         }
 
-        // Check it's not the platform domain
         if ($domain === $this->platformDomain) {
             return null;
         }

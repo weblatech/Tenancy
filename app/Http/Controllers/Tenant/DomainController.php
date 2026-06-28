@@ -129,9 +129,6 @@ class DomainController extends Controller
         // Try to remove from Render
         $this->domainService->removeFromRender($domain->domain);
 
-        // Clear DNS cache
-        cache()->forget("dns_check_{$domain->domain}");
-
         $domain->delete();
 
         return redirect('/shop/domains')->with('success', 'Domain deleted successfully!');
@@ -176,9 +173,6 @@ class DomainController extends Controller
         $results = [];
 
         foreach ($domains as $domain) {
-            // Clear cache first
-            cache()->forget("dns_check_{$domain->domain}");
-
             $results[$domain->domain] = $this->domainService->checkDnsStatus($domain->domain);
         }
 
