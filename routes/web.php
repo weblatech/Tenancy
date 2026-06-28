@@ -202,3 +202,83 @@ Route::get('/terms-of-service', function () {
 // Universal WhatsApp webhook — outside domain group so it works on root domain
 Route::get('/webhook/whatsapp/universal', [\App\Http\Controllers\WhatsAppWebhookController::class, 'verifyUniversal']);
 Route::post('/webhook/whatsapp/universal', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handleUniversal']);
+
+// COMPREHENSIVE DEBUG — shows exactly why 404 is happening
+Route::get('/debug/routing/{slug?}', function ($slug = null) {
+    $debug = [
+        'url' => request()->fullUrl(),
+        'host' => request()->getHost(),
+        'path' => request()->path(),
+        'central_domains' => config('tenancy.central_domains'),
+        'db_connection' => config('database.default'),
+    ];
+
+    // Check if tenant exists
+    try {
+        $tenant = \App\Models\Tenant::find('purelife');
+        $debug['tenant_found'] = $tenant ? true : false;
+        $debug['tenant_id'] = $tenant?->id;
+        $debug['tenant_name'] = $tenant?->name;
+    } catch (\Exception $e) {
+        $debug['tenant_error'] = $e->getMessage();
+    }
+
+    // Check pages table and data
+    try {
+        \Illuminate\Support\Facades\Config::set('database.default', 'pgsql');
+        $conn = \Illuminate\Support\Facades\DB::connection('pgsql');
+        $debug['central_db'] = $conn->getDatabaseName();
+
+        // Try to find tenant database
+        $tenantDb = 'tenant' . 'purelife';
+        $debug['tenant_db_name'] = $tenantDb;
+        $debug['tenant_db_exists'] = $conn->select("SELECT 1 FROM pg_database WHERE datname = ?", [$tenantDb])->isNotEmpty();
+    } catch (\Exception $e) {
+        $debug['db_error'] = $e->getMessage();
+    }
+
+    // Check tenant-specific page
+    if ($slug) {
+        try {
+            $tenant = \App\Models\Tenant::find('purelife');
+            if ($tenant) {
+                tenancy()->initialize($tenant);
+                $debug['tenancy_initialized'] = true;
+                $debug['current_tenant_id'] = tenant('id');
+                $debug['current_db'] = DB::connection()->getDatabaseName();
+                $debug['pages_table_exists'] = Schema::hasTable('pages');
+                if ($debug['pages_table_exists']) {
+                    $pages = \App\Models\Page::all();
+                    $debug['pages_count'] = $pages->count();
+                    $debug['pages'] = $pages->map(fn($p) => ['slug' => $p->slug, 'title' => $p->title, 'is_active' => $p->is_active])->toArray();
+                    $debug['page_found'] = \App\Models\Page::where('slug', $slug)->first() ? true : false;
+                }
+                tenancy()->end();
+            }
+        } catch (\Exception $e) {
+            $debug['page_check_error'] = $e->getMessage();
+        }
+    }
+
+    // List all registered routes matching 'page'
+    try {
+        $routes = app('router')->getRoutes();
+        $matchingRoutes = [];
+        foreach ($routes as $route) {
+            $uri = $route->getUri();
+            if (str_contains($uri, 'page') || str_contains($uri, 'tenant')) {
+                $matchingRoutes[] = [
+                    'uri' => $uri,
+                    'methods' => $route->getMethods(),
+                    'action' => $route->getAction()['uses'] ?? 'Closure',
+                ];
+            }
+        }
+        $debug['routes_with_page_or_tenant'] = array_slice($matchingRoutes, 0, 30);
+        $debug['total_routes'] = $routes->count();
+    } catch (\Exception $e) {
+        $debug['route_list_error'] = $e->getMessage();
+    }
+
+    return response()->json($debug, 200, [], JSON_PRETTY_PRINT);
+});

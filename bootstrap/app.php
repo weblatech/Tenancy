@@ -10,12 +10,12 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
-        // یہاں ہم نے دکان (Tenant) کے راستوں کو لاراویل 12 کے مطابق رجسٹر کر دیا ہے
         then: function () {
-            // Domain-based tenancy (custom domains)
-            require dirname(__DIR__) . '/routes/tenant.php';
-
-            // Path-based tenancy for Render (/{tenant}/shop, /{tenant}/, etc.)
+            // Load tenant routes ONCE — with {tenant} prefix for storefront routes
+            // The InitializeTenantFlexible middleware inside tenant.php handles:
+            // 1. Route param {tenant} — e.g. /purelife/page/about-us
+            // 2. Domain-based tenancy — e.g. customdomain.com
+            // 3. User-based tenancy (fallback) — e.g. /shop/settings when logged in
             Route::prefix('{tenant}')->middleware([
                 'web',
                 \App\Http\Middleware\InitializeTenantFlexible::class,

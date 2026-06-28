@@ -10,6 +10,13 @@ class InitializeTenantFlexible
 {
     public function handle(Request $request, Closure $next)
     {
+        \Illuminate\Support\Facades\Log::info("TENANT MIDDLEWARE", [
+            'url' => $request->fullUrl(),
+            'host' => $request->getHost(),
+            'route_tenant' => $request->route('tenant'),
+            'tenancy_initialized' => tenancy()->initialized,
+        ]);
+
         // Already initialized by route parameter?
         if (tenancy()->initialized) {
             return $next($request);
@@ -33,10 +40,16 @@ class InitializeTenantFlexible
         $tenantParam = $request->route('tenant');
         if ($tenantParam) {
             $tenant = \App\Models\Tenant::find($tenantParam);
+            \Illuminate\Support\Facades\Log::info("TENANT MIDDLEWARE route param", [
+                'tenantParam' => $tenantParam,
+                'found' => $tenant ? true : false,
+                'tenant_id' => $tenant?->id ?? 'null',
+            ]);
             if ($tenant) {
                 tenancy()->initialize($tenant);
                 return $next($request);
             }
+            \Illuminate\Support\Facades\Log::warning("TENANT MIDDLEWARE aborting 404", ['tenantParam' => $tenantParam]);
             abort(404, 'Store not found');
         }
 

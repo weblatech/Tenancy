@@ -1320,7 +1320,9 @@ Route::middleware([
 
     // 📄 Storefront page renderer
     Route::get('/page/{slug}', function ($slug) {
+        \Illuminate\Support\Facades\Log::info("PAGE ROUTE HIT", ['slug' => $slug, 'url' => request()->fullUrl(), 'host' => request()->getHost()]);
         $tenantId = tenant('id');
+        \Illuminate\Support\Facades\Log::info("PAGE ROUTE tenant ID", ['tenant_id' => $tenantId, 'tenancy_initialized' => tenancy()->initialized]);
 
         // If tenant not initialized, try to initialize from user session
         if (!$tenantId) {

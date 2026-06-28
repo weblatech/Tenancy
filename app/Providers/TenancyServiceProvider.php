@@ -120,12 +120,8 @@ class TenancyServiceProvider extends ServiceProvider
 
     protected function mapRoutes()
     {
-        $this->app->booted(function () {
-            if (file_exists(base_path('routes/tenant.php'))) {
-                Route::namespace(static::$controllerNamespace)
-                    ->group(base_path('routes/tenant.php'));
-            }
-        });
+        // Routes are now loaded in bootstrap/app.php with {tenant} prefix
+        // This avoids triple-loading tenant.php (which was causing 404s)
     }
 
     protected function makeTenancyMiddlewareHighestPriority()
