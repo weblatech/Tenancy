@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -28,14 +27,14 @@ class DomainService
     public function checkDnsStatus(string $domain): string
     {
         $cacheKey = "dns_check_{$domain}";
-        $cached = Cache::get($cacheKey);
+        $cached = cache()->get($cacheKey);
         if ($cached !== null) {
             return $cached;
         }
 
         // Localhost always connected (dev only)
         if (str_ends_with($domain, 'localhost') || $domain === '127.0.0.1') {
-            Cache::put($cacheKey, 'connected', 300);
+            cache()->put($cacheKey, 'connected', 300);
             return 'connected';
         }
 
@@ -43,30 +42,30 @@ class DomainService
         $ip = gethostbyname($domain);
         if ($ip === $domain) {
             // DNS not propagated yet
-            Cache::put($cacheKey, 'resolving', 60);
+            cache()->put($cacheKey, 'resolving', 60);
             return 'resolving';
         }
 
         // Check A record
         if (!empty($this->platformIp) && $ip === $this->platformIp) {
-            Cache::put($cacheKey, 'connected', 300);
+            cache()->put($cacheKey, 'connected', 300);
             return 'connected';
         }
 
         // Check CNAME
         $cname = @dns_get_record($domain, DNS_CNAME);
         if (!empty($cname) && str_ends_with($cname[0]['target'], $this->platformDomain)) {
-            Cache::put($cacheKey, 'connected', 300);
+            cache()->put($cacheKey, 'connected', 300);
             return 'connected';
         }
 
         // Check if it resolves to a valid IP (might be pointing elsewhere)
         if ($ip && $ip !== $domain) {
-            Cache::put($cacheKey, 'mismatch', 300);
+            cache()->put($cacheKey, 'mismatch', 300);
             return 'mismatch';
         }
 
-        Cache::put($cacheKey, 'resolving', 60);
+        cache()->put($cacheKey, 'resolving', 60);
         return 'resolving';
     }
 

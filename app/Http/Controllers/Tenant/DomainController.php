@@ -130,7 +130,7 @@ class DomainController extends Controller
         $this->domainService->removeFromRender($domain->domain);
 
         // Clear DNS cache
-        \Illuminate\Support\Facades\Cache::forget("dns_check_{$domain->domain}");
+        cache()->forget("dns_check_{$domain->domain}");
 
         $domain->delete();
 
@@ -177,7 +177,7 @@ class DomainController extends Controller
 
         foreach ($domains as $domain) {
             // Clear cache first
-            \Illuminate\Support\Facades\Cache::forget("dns_check_{$domain->domain}");
+            cache()->forget("dns_check_{$domain->domain}");
 
             $results[$domain->domain] = $this->domainService->checkDnsStatus($domain->domain);
         }
