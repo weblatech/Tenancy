@@ -796,13 +796,14 @@ Route::middleware([
     // Custom Domain Settings
     Route::get('/shop/domains', function () {
         $domains = tenant()->domains;
-        $platformIp = config('platform.ip', request()->server('SERVER_ADDR') ?: '127.0.0.1');
+        $platformIp = config('platform.ip', '');
+        $platformDomain = config('platform.domain', 'saas-ecommerce-xx7e.onrender.com');
         $centralDomains = config('tenancy.central_domains', ['localhost', '127.0.0.1']);
-        $defaultSubdomain = tenant('id') . '.' . ($centralDomains[0] ?? 'localhost');
+        $defaultSubdomain = tenant('id') . '.' . $platformDomain;
         
         // Determine the current store URL for the storefront link
         $currentHost = request()->getHost();
-        $storeUrl = "http://{$currentHost}";
+        $storeUrl = "https://{$currentHost}";
         if (request()->getPort() && request()->getPort() != 80) {
             $storeUrl .= ":" . request()->getPort();
         }
@@ -811,6 +812,7 @@ Route::middleware([
             'tenantId' => tenant('id'),
             'domains' => $domains,
             'platformIp' => $platformIp,
+            'platformDomain' => $platformDomain,
             'centralDomains' => $centralDomains,
             'defaultSubdomain' => $defaultSubdomain,
             'storeUrl' => $storeUrl,

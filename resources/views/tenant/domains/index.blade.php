@@ -179,33 +179,41 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
-                                @php
-                                    // Helper function for DNS check
-                                    if (!function_exists('checkDomainDns')) {
-                                        function checkDomainDns($domainName, $platformIp) {
-                                            // Localhost domains are always connected
-                                            if (str_ends_with($domainName, 'localhost') || $domainName === '127.0.0.1') {
-                                                return 'connected';
+                                    @php
+                                        // Helper function for DNS check
+                                        if (!function_exists('checkDomainDns')) {
+                                            function checkDomainDns($domainName, $platformIp, $platformDomain) {
+                                                // Localhost domains are always connected (dev only)
+                                                if (str_ends_with($domainName, 'localhost') || $domainName === '127.0.0.1') {
+                                                    return 'connected';
+                                                }
+                                                
+                                                // Check if domain resolves to our platform
+                                                $ip = gethostbyname($domainName);
+                                                if ($ip === $domainName) {
+                                                    return 'resolving';
+                                                }
+                                                
+                                                // Check A record matches platform IP (if set)
+                                                if (!empty($platformIp) && $ip === $platformIp) {
+                                                    return 'connected';
+                                                }
+                                                
+                                                // Check CNAME points to platform domain
+                                                $cname = dns_get_record($domainName, DNS_CNAME);
+                                                if (!empty($cname) && $cname[0]['target'] === $platformDomain) {
+                                                    return 'connected';
+                                                }
+                                                
+                                                return 'mismatch';
                                             }
-                                            if (!filter_var(gethostbyname($domainName), FILTER_VALIDATE_IP)) {
-                                                return 'pending';
-                                            }
-                                            $ip = gethostbyname($domainName);
-                                            if ($ip === $domainName) {
-                                                return 'pending'; // DNS not resolved yet
-                                            }
-                                            if ($ip === $platformIp || $ip === '127.0.0.1') {
-                                                return 'connected';
-                                            }
-                                            return 'mismatch';
                                         }
-                                    }
-                                @endphp
+                                    @endphp
 
                                 @foreach($domains as $index => $domain)
                                     @php
                                         $isSystemDefault = ($domain->domain === $defaultSubdomain);
-                                        $status = checkDomainDns($domain->domain, $platformIp);
+                                        $status = checkDomainDns($domain->domain, $platformIp, $platformDomain);
                                     @endphp
                                     <tr class="hover:bg-slate-50/40 transition">
                                         <!-- DOMAIN NAME -->
@@ -281,55 +289,90 @@
                         </div>
                     </div>
 
-                    <!-- Instructions description -->
+                    <!-- Step 1: Add domain in Render -->
+                    <div class="bg-rose-50/60 border border-rose-100/60 p-4 rounded-2xl">
+                        <p class="text-xs text-rose-900 font-bold leading-relaxed mb-2">
+                            <span class="bg-rose-500 text-white text-[9px] px-1.5 py-0.5 rounded font-black mr-1">STEP 1</span>
+                            Add Domain in Render Dashboard
+                        </p>
+                        <p class="text-[11px] text-rose-800 font-medium leading-relaxed">
+                            Before configuring DNS, you <strong>must</strong> add your custom domain in the Render dashboard:
+                        </p>
+                        <ol class="text-[11px] text-rose-800 font-medium leading-relaxed mt-2 ml-4 list-decimal space-y-1">
+                            <li>Go to <strong>Render Dashboard</strong> → your service → <strong>Settings</strong></li>
+                            <li>Scroll to <strong>Custom Domains</strong> → click <strong>Add Custom Domain</strong></li>
+                            <li>Enter your domain (e.g. <code class="bg-rose-100 px-1 rounded">mybrand.com</code>)</li>
+                            <li>Render will show you the DNS records to configure (see below)</li>
+                        </ol>
+                    </div>
+
+                    <!-- Step 2: Configure DNS -->
                     <div class="bg-violet-50/60 border border-violet-100/60 p-4 rounded-2xl">
-                        <p class="text-xs text-violet-900 font-semibold leading-relaxed">
-                            To connect your custom domain (e.g. <strong>mydomain.com</strong>) to your storefront, log in to your domain provider (GoDaddy, Namecheap, Cloudflare, etc.) hosting panel and add the records below:
+                        <p class="text-xs text-violet-900 font-bold leading-relaxed mb-2">
+                            <span class="bg-violet-500 text-white text-[9px] px-1.5 py-0.5 rounded font-black mr-1">STEP 2</span>
+                            Configure DNS at Your Domain Registrar
+                        </p>
+                        <p class="text-[11px] text-violet-800 font-medium leading-relaxed">
+                            Log in to your domain provider (GoDaddy, Namecheap, Cloudflare, etc.) and add these records:
                         </p>
                     </div>
 
                     <div class="space-y-4">
-                        <!-- Record 1: A Record -->
-                        <div class="bg-white border border-slate-200 p-4 rounded-2xl space-y-3 shadow-inner">
-                            <div class="flex justify-between items-center">
-                                <span class="bg-slate-100 text-slate-700 text-[9px] px-2 py-0.5 rounded font-black">A RECORD</span>
-                                <span class="text-[10px] text-slate-400 font-bold">Root Mapping</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-2 text-xs font-bold text-slate-500">
-                                <div>Host: <code class="text-slate-800 font-black block mt-0.5 text-xs bg-slate-50 p-1 rounded text-center">@</code></div>
-                                <div class="col-span-2 relative">
-                                    Value (IP): 
-                                    <div class="flex items-center mt-0.5 bg-slate-50 border rounded p-1">
-                                        <code id="ip-val" class="text-indigo-600 font-black text-xs select-all shrink-0 flex-grow text-center" style="font-family: monospace;">{{ $platformIp }}</code>
-                                        <button onclick="copyText('ip-val', this)" class="text-slate-400 hover:text-indigo-600 font-bold text-[9px] ml-1 shrink-0 px-1 border-l transition-colors duration-150">Copy</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Record 2: CNAME Record -->
+                        <!-- Record 1: CNAME Record (Recommended) -->
                         <div class="bg-white border border-slate-200 p-4 rounded-2xl space-y-3 shadow-inner">
                             <div class="flex justify-between items-center">
                                 <span class="bg-slate-100 text-slate-700 text-[9px] px-2 py-0.5 rounded font-black">CNAME RECORD</span>
-                                <span class="text-[10px] text-slate-400 font-bold">Subdomain Mapping</span>
+                                <span class="text-[10px] text-slate-400 font-bold">Subdomain Mapping (Recommended)</span>
                             </div>
                             <div class="grid grid-cols-3 gap-2 text-xs font-bold text-slate-500">
                                 <div>Host: <code class="text-slate-800 font-black block mt-0.5 text-xs bg-slate-50 p-1 rounded text-center">www</code></div>
                                 <div class="col-span-2 relative">
                                     Value: 
                                     <div class="flex items-center mt-0.5 bg-slate-50 border rounded p-1">
-                                        <code id="sub-val" class="text-indigo-600 font-black text-[10px] select-all shrink-0 flex-grow text-center overflow-x-auto whitespace-nowrap scrollbar-thin" style="font-family: monospace;">{{ $defaultSubdomain }}</code>
+                                        <code id="sub-val" class="text-indigo-600 font-black text-[10px] select-all shrink-0 flex-grow text-center overflow-x-auto whitespace-nowrap scrollbar-thin" style="font-family: monospace;">{{ $platformDomain }}</code>
                                         <button onclick="copyText('sub-val', this)" class="text-slate-400 hover:text-indigo-600 font-bold text-[9px] ml-1 shrink-0 px-1 border-l transition-colors duration-150">Copy</button>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Record 2: A Record (for root domain) -->
+                        <div class="bg-white border border-slate-200 p-4 rounded-2xl space-y-3 shadow-inner">
+                            <div class="flex justify-between items-center">
+                                <span class="bg-slate-100 text-slate-700 text-[9px] px-2 py-0.5 rounded font-black">A RECORD</span>
+                                <span class="text-[10px] text-slate-400 font-bold">Root Domain (if no CNAME support)</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 text-xs font-bold text-slate-500">
+                                <div>Host: <code class="text-slate-800 font-black block mt-0.5 text-xs bg-slate-50 p-1 rounded text-center">@</code></div>
+                                <div class="col-span-2 relative">
+                                    Value (IP): 
+                                    <div class="flex items-center mt-0.5 bg-slate-50 border rounded p-1">
+                                        @if(!empty($platformIp))
+                                            <code id="ip-val" class="text-indigo-600 font-black text-xs select-all shrink-0 flex-grow text-center" style="font-family: monospace;">{{ $platformIp }}</code>
+                                            <button onclick="copyText('ip-val', this)" class="text-slate-400 hover:text-indigo-600 font-bold text-[9px] ml-1 shrink-0 px-1 border-l transition-colors duration-150">Copy</button>
+                                        @else
+                                            <code class="text-amber-600 font-bold text-[10px] flex-grow text-center" style="font-family: monospace;">Check Render Dashboard → Settings → Custom Domains</code>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            @if(empty($platformIp))
+                                <p class="text-[10px] text-amber-600 font-medium">PLATFORM_IP not set. Add custom domain in Render first to get the correct IP.</p>
+                            @endif
                         </div>
                     </div>
 
                     <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex gap-2">
                         <span class="text-sm shrink-0">ℹ️</span>
                         <p class="text-[10px] text-amber-800 font-semibold leading-relaxed">
-                            <strong>Note:</strong> DNS changes take time to propagate across servers worldwide. It might take anywhere between 1 to 24 hours for your store to connect successfully.
+                            <strong>Note:</strong> DNS changes take time to propagate. It might take 1–24 hours. After propagation, click <strong>Refresh Status</strong> to check connection.
+                        </p>
+                    </div>
+
+                    <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex gap-2">
+                        <span class="text-sm shrink-0">💡</span>
+                        <p class="text-[10px] text-emerald-800 font-semibold leading-relaxed">
+                            <strong>Tip:</strong> For the best setup, add both <code>CNAME</code> (for www) and <code>A Record</code> (for root) at your domain registrar.
                         </p>
                     </div>
                 </div>
