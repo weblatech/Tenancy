@@ -203,6 +203,12 @@ Route::get('/terms-of-service', function () {
 Route::get('/webhook/whatsapp/universal', [\App\Http\Controllers\WhatsAppWebhookController::class, 'verifyUniversal']);
 Route::post('/webhook/whatsapp/universal', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handleUniversal']);
 
+// HARDCODED TEST — bypasses everything to test URL path matching
+Route::get('/purelife/page/{slug}', function ($slug) {
+    return response("HARDCODED: slug=$slug, host=" . request()->getHost(), 200)
+        ->header('Content-Type', 'text/plain');
+});
+
 // COMPREHENSIVE DEBUG — shows exactly why 404 is happening
 Route::get('/debug/routing/{slug?}', function ($slug = null) {
     $debug = [
