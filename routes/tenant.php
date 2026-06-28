@@ -1009,25 +1009,29 @@ Route::middleware([
             $slug = $slug . '-' . time();
         }
 
+        // Default is_active to true for new pages
+        $isActive = $request->page_id ? $request->has('is_active') : true;
+
         if ($request->page_id) {
             $page = App\Models\Page::findOrFail($request->page_id);
             $page->update([
                 'title' => $request->title,
                 'slug' => $slug,
                 'content' => $request->content,
-                'is_active' => $request->has('is_active'),
+                'is_active' => $isActive,
                 'is_policy' => $request->has('is_policy'),
             ]);
-            $msg = 'Page Updated Successfully! 📄';
+            $msg = 'Page Updated Successfully!';
         } else {
             App\Models\Page::create([
                 'title' => $request->title,
                 'slug' => $slug,
                 'content' => $request->content,
-                'is_active' => $request->has('is_active'),
+                'is_active' => $isActive,
                 'is_policy' => $request->has('is_policy'),
             ]);
-            $msg = 'Page Created Successfully! 📄';
+            $pageUrl = tenant_store_url('/page/' . $slug);
+            $msg = 'Page Created Successfully! <a href="' . $pageUrl . '" target="_blank" class="underline font-black ml-2">View Page →</a>';
         }
 
         // Auto add to Header Menu if requested
