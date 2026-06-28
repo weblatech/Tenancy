@@ -1300,7 +1300,14 @@ Route::middleware([
     // 📄 اسٹور فرنٹ پیج رینڈر کرنا
     Route::get('/page/{slug}', function ($slug) {
         $settings = StoreSetting::firstOrCreate(['id' => 1]);
-        $page = App\Models\Page::where('slug', $slug)->where('is_active', true)->firstOrFail();
+        $page = App\Models\Page::where('slug', $slug)->first();
+        if (!$page) {
+            abort(404, 'Page not found.');
+        }
+        if (!$page->is_active) {
+            // Auto-activate pages that were created with is_active=0
+            $page->update(['is_active' => true]);
+        }
         return view('tenant.page', [
             'tenantId' => tenant('id'),
             'settings' => $settings,
