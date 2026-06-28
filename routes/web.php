@@ -203,31 +203,6 @@ Route::get('/terms-of-service', function () {
 Route::get('/webhook/whatsapp/universal', [\App\Http\Controllers\WhatsAppWebhookController::class, 'verifyUniversal']);
 Route::post('/webhook/whatsapp/universal', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handleUniversal']);
 
-// PAGE ROUTE — moved here to bypass tenant routing issue
-Route::get('/{tenant}/page/{slug}', function ($tenant, $slug) {
-    $t = \App\Models\Tenant::find($tenant);
-    if (!$t) { abort(404, 'Store not found: ' . $tenant); }
-    tenancy()->initialize($t);
-
-    if (!\Illuminate\Support\Facades\Schema::hasTable('pages')) {
-        try { \Artisan::call('tenants:migrate', ['--tenants' => [$tenant]]); } catch (\Exception $e) {}
-    }
-
-    $page = \App\Models\Page::where('slug', $slug)->first();
-    if (!$page) {
-        $allSlugs = \App\Models\Page::pluck('slug')->implode(', ');
-        abort(404, "Page '{$slug}' not found in store '{$tenant}'. Available: [{$allSlugs}]");
-    }
-    if (!$page->is_active) { $page->update(['is_active' => true]); }
-
-    $settings = \App\Models\StoreSetting::firstOrCreate(['id' => 1]);
-    return view('tenant.page', [
-        'tenantId' => tenant('id'),
-        'settings' => $settings,
-        'page' => $page,
-    ]);
-});
-
 // COMPREHENSIVE DEBUG — shows exactly why 404 is happening
 Route::get('/debug/routing/{slug?}', function ($slug = null) {
     $debug = [

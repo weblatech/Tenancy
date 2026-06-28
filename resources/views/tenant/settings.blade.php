@@ -1141,7 +1141,7 @@
                                     <div>
                                         <h4 class="font-bold text-slate-800 text-xs tracking-tight">{{ $page->title }}</h4>
                                         <div class="flex items-center gap-2 mt-0.5">
-                                            <span class="text-[9px] font-mono text-slate-400">/page/{{ $page->slug }}</span>
+                                            <span class="text-[9px] font-mono text-slate-400">/pages/{{ $page->slug }}</span>
                                             @if($page->is_policy)
                                                 <span class="text-[8px] bg-emerald-50 text-emerald-600 border border-emerald-200 font-extrabold px-1.5 py-0.5 rounded-full uppercase">Policy</span>
                                             @endif
@@ -1298,7 +1298,7 @@
                                 <div class="hidden" id="add-header-page-wrapper">
                                     <select id="add-header-page" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold outline-none bg-white">
                                         @foreach($pages as $p)
-                                            <option value="/page/{{ $p->slug }}">{{ $p->title }} (/page/{{ $p->slug }})</option>
+                                            <option value="/pages/{{ $p->slug }}">{{ $p->title }} (/pages/{{ $p->slug }})</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -1336,7 +1336,7 @@
                                 <div class="hidden" id="add-quick-page-wrapper">
                                     <select id="add-quick-page" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold outline-none bg-white">
                                         @foreach($pages as $p)
-                                            <option value="/page/{{ $p->slug }}">{{ $p->title }}</option>
+                                            <option value="/pages/{{ $p->slug }}">{{ $p->title }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -1374,7 +1374,7 @@
                                 <div class="hidden" id="add-policies-page-wrapper">
                                     <select id="add-policies-page" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-bold outline-none bg-white">
                                         @foreach($pages as $p)
-                                            <option value="/page/{{ $p->slug }}">{{ $p->title }}</option>
+                                            <option value="/pages/{{ $p->slug }}">{{ $p->title }}</option>
                                         @endforeach
                                     </select>
                                 </div>

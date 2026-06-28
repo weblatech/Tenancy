@@ -1051,7 +1051,7 @@ Route::middleware([
                 'is_active' => $isActive,
                 'is_policy' => $request->has('is_policy'),
             ]);
-            $pageUrl = tenant_store_url('/page/' . $slug);
+            $pageUrl = tenant_store_url('/pages/' . $slug);
             $msg = 'Page Created Successfully! <a href="' . $pageUrl . '" target="_blank" class="underline font-black ml-2">View Page →</a>';
         }
 
@@ -1069,7 +1069,7 @@ Route::middleware([
                 $headerMenu = [];
             }
             $exists = false;
-            $pageUrl = '/page/' . $slug;
+            $pageUrl = '/pages/' . $slug;
             foreach ($headerMenu as $item) {
                 if (($item['url'] ?? '') === $pageUrl) {
                     $exists = true;
@@ -1318,8 +1318,8 @@ Route::middleware([
         return redirect('/shop/settings')->with('success', 'Navigation Settings updated successfully! 🗺️');
     });
 
-    // 📄 Storefront page renderer
-    Route::get('/page/{slug}', function ($slug) {
+    // 📄 Storefront page renderer (changed from /page/ to /pages/ to debug 404)
+    Route::get('/pages/{slug}', function ($slug) {
         try {
             \Illuminate\Support\Facades\Log::info("PAGE ROUTE HIT", ['slug' => $slug, 'url' => request()->fullUrl()]);
             $tenantId = tenant('id');
@@ -1334,7 +1334,7 @@ Route::middleware([
                     }
                 }
                 if (!$tenantId) {
-                    abort(404, 'Store not found. Please visit via your store URL (e.g. /your-store-id/page/{slug})');
+                    abort(404, 'Store not found. Please visit via your store URL (e.g. /your-store-id/pages/{slug})');
                 }
             }
 

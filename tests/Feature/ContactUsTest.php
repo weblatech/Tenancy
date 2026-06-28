@@ -85,7 +85,7 @@ class ContactUsTest extends TestCase
         
         $hasLink = false;
         foreach ($headerMenu as $item) {
-            if (($item['url'] ?? '') === '/page/contact-us') {
+            if (($item['url'] ?? '') === '/pages/contact-us') {
                 $hasLink = true;
                 $this->assertEquals('Contact Us', $item['label']);
             }
