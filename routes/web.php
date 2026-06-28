@@ -203,19 +203,9 @@ Route::get('/terms-of-service', function () {
 Route::get('/webhook/whatsapp/universal', [\App\Http\Controllers\WhatsAppWebhookController::class, 'verifyUniversal']);
 Route::post('/webhook/whatsapp/universal', [\App\Http\Controllers\WhatsAppWebhookController::class, 'handleUniversal']);
 
-// ROUTE LIST — shows all routes matching 'page' or 'purelife'
-Route::get('/routes', function () {
-    $routes = app('router')->getRoutes();
-    $result = [];
-    foreach ($routes as $route) {
-        $uri = $route->getUri();
-        if (str_contains($uri, 'page') || str_contains($uri, 'purelife')) {
-            $result[] = $uri . ' [' . implode(',', $route->getMethods()) . '] -> ' . ($route->getAction()['uses'] ?? 'Closure');
-        }
-    }
-    sort($result);
-    return response(implode("\n", $result), 200)->header('Content-Type', 'text/plain');
-});
+// DEBUG TESTS
+Route::get('/test-page/{slug}', function ($slug) { return "TEST: $slug"; });
+Route::get('/{tenant}/test-page/{slug}', function ($tenant, $slug) { return "TENANT TEST: $tenant / $slug"; });
 
 // COMPREHENSIVE DEBUG — shows exactly why 404 is happening
 Route::get('/debug/routing/{slug?}', function ($slug = null) {
