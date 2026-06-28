@@ -326,13 +326,24 @@ Route::middleware([
         return redirect('/shop/products')->with('success', 'Product deleted successfully! 🗑️');
     });
 
-    // ⚙️ تھیم کسٹمائزر
+    // ⚙️ Theme Customizer
     Route::get('/shop/settings', function () {
+        // Ensure pages table exists
+        $pages = collect();
+        if (\Illuminate\Support\Facades\Schema::hasTable('pages')) {
+            $pages = App\Models\Page::all();
+        } else {
+            try {
+                \Artisan::call('tenants:migrate', ['--tenants' => [tenant('id')]]);
+                $pages = App\Models\Page::all();
+            } catch (\Exception $e) {}
+        }
+
         return view('tenant.settings', [
-            'tenantId' => tenant('id'), 
-            'settings' => StoreSetting::firstOrCreate(['id' => 1]), 
+            'tenantId' => tenant('id'),
+            'settings' => StoreSetting::firstOrCreate(['id' => 1]),
             'sections' => StoreSection::orderBy('sort_order')->get(),
-            'pages' => App\Models\Page::all()
+            'pages' => $pages,
         ]);
     });
 
@@ -997,8 +1008,18 @@ Route::middleware([
         StoreSection::findOrFail($id)->delete(); return redirect('/shop/settings')->with('success', 'Section deleted successfully!'); 
     });
 
-    // 📄 پیج بنانا اور ایڈٹ کرنا
+    // 📄 Page creation and editing
     Route::post('/shop/settings/page', function (Request $request) {
+        // Ensure pages table exists
+        if (!\Illuminate\Support\Facades\Schema::hasTable('pages')) {
+            try {
+                \Artisan::call('tenants:migrate', ['--tenants' => [tenant('id')]]);
+            } catch (\Exception $e) {}
+            if (!\Illuminate\Support\Facades\Schema::hasTable('pages')) {
+                return redirect('/shop/settings')->with('error', 'Pages table not found. Please refresh and try again.');
+            }
+        }
+
         $slug = $request->slug ? \Illuminate\Support\Str::slug($request->slug) : \Illuminate\Support\Str::slug($request->title);
         
         $existing = App\Models\Page::where('slug', $slug);
@@ -1297,27 +1318,47 @@ Route::middleware([
         return redirect('/shop/settings')->with('success', 'Navigation Settings updated successfully! 🗺️');
     });
 
-    // 📄 اسٹور فرنٹ پیج رینڈر کرنا
+    // 📄 Storefront page renderer
     Route::get('/page/{slug}', function ($slug) {
-        $settings = StoreSetting::firstOrCreate(['id' => 1]);
-        
-        // Debug: check if tenancy is initialized
         $tenantId = tenant('id');
-        
-        $page = App\Models\Page::where('slug', $slug)->first();
-        if (!$page) {
-            // Try to find by similar slug (helps debug)
-            $allPages = App\Models\Page::select('id', 'slug', 'is_active', 'title')->get();
-            $suggestion = '';
-            if ($allPages->count() > 0) {
-                $slugs = $allPages->pluck('slug')->implode(', ');
-                $suggestion = " Available pages: [{$slugs}]";
+
+        // If tenant not initialized, try to initialize from user session
+        if (!$tenantId) {
+            if (\Illuminate\Support\Facades\Auth::check() && \Illuminate\Support\Facades\Auth::user()->tenant_id) {
+                $t = \App\Models\Tenant::find(\Illuminate\Support\Facades\Auth::user()->tenant_id);
+                if ($t) {
+                    try { tenancy()->initialize($t); } catch (\Exception $e) {}
+                    $tenantId = tenant('id');
+                }
             }
-            abort(404, "Page '{$slug}' not found in tenant '{$tenantId}'.{$suggestion}");
+            if (!$tenantId) {
+                abort(404, 'Store not found. Please visit via your store URL (e.g. /your-store-id/page/{slug})');
+            }
         }
+
+        // Ensure pages table exists
+        if (!\Illuminate\Support\Facades\Schema::hasTable('pages')) {
+            try {
+                \Artisan::call('tenants:migrate', ['--tenants' => [$tenantId]]);
+            } catch (\Exception $e) {}
+            if (!\Illuminate\Support\Facades\Schema::hasTable('pages')) {
+                abort(404, 'Pages system not initialized for this store.');
+            }
+        }
+
+        $settings = StoreSetting::firstOrCreate(['id' => 1]);
+        $page = \App\Models\Page::where('slug', $slug)->first();
+
+        if (!$page) {
+            $allSlugs = \App\Models\Page::pluck('slug')->implode(', ');
+            $hint = $allSlugs ? " Available: [{$allSlugs}]" : ' (no pages exist yet — create one in Theme Customizer → Pages)';
+            abort(404, "Page '{$slug}' not found in store '{$tenantId}'.{$hint}");
+        }
+
         if (!$page->is_active) {
             $page->update(['is_active' => true]);
         }
+
         return view('tenant.page', [
             'tenantId' => $tenantId,
             'settings' => $settings,
@@ -1325,22 +1366,35 @@ Route::middleware([
         ]);
     });
 
-    // Debug: List all pages in current tenant DB
+    // Debug: List all pages + system info
     Route::get('/debug/pages', function () {
         $tenantId = tenant('id');
-        $pages = App\Models\Page::all()->map(fn($p) => [
-            'id' => $p->id,
-            'title' => $p->title,
-            'slug' => $p->slug,
-            'is_active' => $p->is_active,
-            'content_length' => strlen($p->content ?? ''),
-        ]);
-        return response()->json([
+        $result = [
             'tenant' => $tenantId,
             'db_connection' => DB::connection()->getName(),
-            'pages_count' => $pages->count(),
-            'pages' => $pages,
-        ]);
+            'db_database' => DB::connection()->getDatabaseName(),
+            'pages_table_exists' => false,
+            'pages_count' => 0,
+            'pages' => [],
+        ];
+
+        try {
+            $result['pages_table_exists'] = Schema::hasTable('pages');
+            if ($result['pages_table_exists']) {
+                $result['pages'] = App\Models\Page::all()->map(fn($p) => [
+                    'id' => $p->id,
+                    'title' => $p->title,
+                    'slug' => $p->slug,
+                    'is_active' => $p->is_active,
+                    'content_length' => strlen($p->content ?? ''),
+                ])->toArray();
+                $result['pages_count'] = count($result['pages']);
+            }
+        } catch (\Exception $e) {
+            $result['error'] = $e->getMessage();
+        }
+
+        return response()->json($result, 200, [], JSON_PRETTY_PRINT);
     });
 
     // 🛍️ 1. اسٹور کلیکشن پیج (Collection Catalog)
